@@ -1,13 +1,15 @@
-# Requisitos Priorizados — Segunda Entrega
+# Requisitos Priorizados — Sprint 2
 
 ## Proyecto: Sistema de Gestión de Pedidos e Inventario
 **Metodología:** Scrum  
 **Sprint:** 2  
 **Duración del sprint:** 2 semanas
 
+> 📄 Ver el Product Backlog completo en: [`product_backlog.md`](./product_backlog.md)
+
 ---
 
-## Product Backlog — Historias de Usuario Priorizadas
+## Historias de Usuario del Sprint 2
 
 Las historias de usuario están priorizadas usando el método **MoSCoW** y puntuadas con **Story Points** (escala de Fibonacci: 1, 2, 3, 5, 8, 13).
 
@@ -30,6 +32,7 @@ Las historias de usuario están priorizadas usando el método **MoSCoW** y puntu
 | HU-06 | Como **mesero**, quiero modificar o cancelar un pedido antes de que entre en preparación, para corregir errores del cliente. | 5 | ✅ Solo se puede modificar/cancelar en estado "Pendiente" <br> ✅ El stock se devuelve al cancelar <br> ✅ Se registra quién y cuándo canceló |
 | HU-07 | Como **administrador**, quiero gestionar productos (crear, editar, habilitar/deshabilitar del menú), para mantener el menú actualizado. | 5 | ✅ CRUD completo de productos funcional <br> ✅ Productos deshabilitados no aparecen en el menú del mesero <br> ✅ Cambios reflejados en tiempo real |
 | HU-08 | Como **administrador**, quiero generar un reporte de ventas por rango de fechas, para analizar el desempeño del negocio. | 8 | ✅ Reporte muestra total de pedidos, ingresos y top 5 productos <br> ✅ Filtro por fecha de inicio y fin funcional <br> ✅ Opción de exportar a PDF |
+| HU-09 | Como **administrador**, quiero gestionar usuarios del sistema (crear, editar, activar/desactivar), para controlar el acceso. | 5 | ✅ CRUD de usuarios con asignación de rol <br> ✅ Usuarios desactivados no pueden iniciar sesión |
 
 ---
 
@@ -37,7 +40,6 @@ Las historias de usuario están priorizadas usando el método **MoSCoW** y puntu
 
 | ID | Historia de Usuario | Story Points | Criterios de Aceptación |
 |----|---------------------|:------------:|-------------------------|
-| HU-09 | Como **administrador**, quiero gestionar usuarios (crear, editar, activar/desactivar), para controlar el acceso al sistema. | 5 | ✅ CRUD de usuarios con asignación de rol <br> ✅ Usuarios desactivados no pueden iniciar sesión |
 | HU-10 | Como **cajero**, quiero generar un reporte de cierres de caja diarios, para cuadrar las cuentas al final del turno. | 8 | ✅ Reporte muestra pagos del día por método <br> ✅ Total en efectivo y tarjeta separados |
 | HU-11 | Como **administrador**, quiero exportar el reporte de inventario en Excel, para compartirlo con proveedores. | 3 | ✅ Exportación genera archivo .xlsx válido <br> ✅ Incluye nombre, stock actual y stock mínimo |
 | HU-12 | Como **usuario**, quiero recuperar mi contraseña por correo electrónico, para no perder acceso al sistema. | 5 | ✅ Envío de correo con enlace de recuperación <br> ✅ El enlace expira en 30 minutos |
@@ -82,9 +84,11 @@ Las historias de usuario están priorizadas usando el método **MoSCoW** y puntu
 | T-17 | HU-06 | Desarrollar endpoint PATCH /pedidos/{id} y DELETE /pedidos/{id} | Backend | 📋 Por hacer | 3 pts |
 | T-18 | HU-07 | Desarrollar endpoints CRUD /productos | Backend | 📋 Por hacer | 5 pts |
 | T-19 | HU-07 | Crear pantalla de gestión de productos para admin | Frontend | 📋 Por hacer | 5 pts |
-| T-20 | Todas | Pruebas de integración de los endpoints principales | QA | 📋 Por hacer | 5 pts |
+| T-20 | HU-09 | Desarrollar endpoints CRUD /usuarios | Backend | 📋 Por hacer | 3 pts |
+| T-21 | HU-09 | Crear pantalla de gestión de usuarios para admin | Frontend | 📋 Por hacer | 3 pts |
+| T-22 | Todas | Pruebas de integración de los endpoints principales | QA | 📋 Por hacer | 5 pts |
 
-**Total Story Points Sprint 2:** 34 puntos (Must Have) + 18 puntos (Should Have) = **52 puntos totales priorizados**
+**Total Story Points Sprint 2:** 34 puntos (Must Have) + 23 puntos (Should Have) = **57 puntos totales comprometidos**
 
 ---
 
