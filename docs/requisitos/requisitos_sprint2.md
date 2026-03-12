@@ -88,7 +88,7 @@ Las historias de usuario están priorizadas usando el método **MoSCoW** y puntu
 | T-21 | HU-09 | Crear pantalla de gestión de usuarios para admin | Frontend | 📋 Por hacer | 3 pts |
 | T-22 | Todas | Pruebas de integración de los endpoints principales | QA | 📋 Por hacer | 5 pts |
 
-**Total Story Points Sprint 2:** 34 puntos (Must Have) + 23 puntos (Should Have) = **57 puntos totales comprometidos**
+**Total Story Points Sprint 2:** 29 puntos (Must Have) + 23 puntos (Should Have) = **52 puntos totales comprometidos**
 
 ---
 
@@ -112,5 +112,5 @@ Una historia de usuario se considera **terminada** cuando cumple todos los sigui
 | Duración del sprint | 2 semanas |
 | Número de integrantes | Por definir |
 | Velocidad estimada | 40–50 story points |
-| Story points comprometidos (Must Have) | 34 pts |
+| Story points comprometidos (Must Have) | 29 pts |
 | Story points objetivo con Should Have | 52 pts |

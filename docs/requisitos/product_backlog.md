@@ -70,6 +70,5 @@ Desarrollar un sistema web que permita a restaurantes gestionar de manera eficie
 | Sprint | Épicas Cubiertas | Historias | Story Points |
 |--------|-----------------|-----------|:------------:|
 | Sprint 1 *(entrega anterior)* | EP-01, EP-02 (parcial) | HU-05, HU-01 (parcial) | ~15 |
-| **Sprint 2** *(entrega actual)* | EP-01, EP-02, EP-03, EP-04 | HU-01, HU-02, HU-03, HU-04, HU-05, HU-06, HU-07 | 39 |
-| Sprint 3 | EP-05, EP-06 | HU-08, HU-09, HU-10, HU-11 | 24 |
-| Sprint 4 (si aplica) | EP-03, EP-04 | HU-12, HU-13, HU-14 | 16 |
+| **Sprint 2** *(entrega actual)* | EP-01, EP-02, EP-03, EP-04, EP-05, EP-06 | HU-01, HU-02, HU-03, HU-04, HU-05, HU-06, HU-07, HU-08, HU-09 | 52 |
+| Sprint 3 | EP-05, EP-03 | HU-10, HU-11, HU-12, HU-13, HU-14 | 27 |
