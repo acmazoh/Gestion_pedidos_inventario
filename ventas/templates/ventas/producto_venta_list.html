@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Productos Disponibles - POS</title>
+</head>
+<body>
+    <h1>Interfaz de Ventas - Productos Disponibles</h1>
+    
+    <h2>Categorías</h2>
+    <div>
+        {% for categoria in categorias %}
+        <button onclick="window.location.href='?categoria={{ categoria.id }}'">{{ categoria.nombre }}</button>
+        {% endfor %}
+    </div>
+    
+    {% if categoria_seleccionada %}
+    <h2>Productos en la categoría: {{ categoria_seleccionada.nombre }}</h2>
+    <ul>
+        {% for producto in productos %}
+        <li>
+            <strong>{{ producto.nombre }}</strong> - {{ producto.precio }}<br>
+            Categoría: {{ producto.categoria }}<br>
+            Descripción: {{ producto.descripcion|default:"Sin descripción" }}<br>
+            Ingredientes: {% for ing in producto.ingredientes.all %}{{ ing.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}
+        </li>
+        {% empty %}
+        <li>No hay productos disponibles en esta categoría.</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</body>
+</html>

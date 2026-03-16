@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestión de Productos</title>
+</head>
+<body>
+    <h1>Productos</h1>
+    <a href="{% url 'producto_create' %}">Crear Nuevo Producto</a>
+    <ul>
+        {% for producto in productos %}
+        <li>
+            {{ producto.nombre }} - {{ producto.categoria }} - ${{ producto.precio }}
+            <a href="{% url 'producto_update' producto.pk %}">Editar</a>
+            <a href="{% url 'producto_delete' producto.pk %}">Eliminar</a>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
