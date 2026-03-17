@@ -106,6 +106,8 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
 class PedidoProductoDeleteView(LoginRequiredMixin, View):
     def post(self, request, pedido_pk, item_pk, *args, **kwargs):
         pedido = get_object_or_404(Pedido, pk=pedido_pk, creado_por=request.user)
+        if pedido.estado != 'pendiente':
+            return redirect('pedido_detail', pk=pedido_pk)
         item = get_object_or_404(PedidoProducto, pk=item_pk, pedido=pedido)
         item.delete()
         return redirect('pedido_detail', pk=pedido_pk)
@@ -114,6 +116,8 @@ class PedidoProductoDeleteView(LoginRequiredMixin, View):
 class PedidoProductoQuantityUpdateView(LoginRequiredMixin, View):
     def post(self, request, pedido_pk, item_pk, *args, **kwargs):
         pedido = get_object_or_404(Pedido, pk=pedido_pk, creado_por=request.user)
+        if pedido.estado != 'pendiente':
+            return redirect('pedido_detail', pk=pedido_pk)
         item = get_object_or_404(PedidoProducto, pk=item_pk, pedido=pedido)
         action = request.POST.get('action')
 
@@ -135,8 +139,57 @@ class PedidoConfirmarView(LoginRequiredMixin, View):
         pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
 
         # Solo puede confirmarse un pedido pendiente con al menos un producto.
-        if pedido.estado == 'pendiente' and pedido.items.exists():
-            pedido.estado = 'en_preparacion'
-            pedido.save()
+        if pedido.estado != 'pendiente' or not pedido.items.exists():
+            return redirect('pedido_detail', pk=pk)
 
+        # Calcular requisitos de ingredientes para el pedido completo
+        required_per_ingredient = {}
+        ingredient_products = {}
+
+        for item in pedido.items.select_related('producto'):
+            receta = list(item.producto.productoingrediente_set.select_related('ingrediente'))
+            if receta:
+                for pi in receta:
+                    required = pi.cantidad * item.cantidad
+                    required_per_ingredient.setdefault(pi.ingrediente, 0)
+                    required_per_ingredient[pi.ingrediente] += required
+                    ingredient_products.setdefault(pi.ingrediente, set()).add(item.producto.nombre)
+            else:
+                for ingrediente in item.producto.ingredientes.all():
+                    required_per_ingredient.setdefault(ingrediente, 0)
+                    required_per_ingredient[ingrediente] += item.cantidad
+                    ingredient_products.setdefault(ingrediente, set()).add(item.producto.nombre)
+
+        shortages = []
+        for ingrediente, required in required_per_ingredient.items():
+            if ingrediente.stock < required:
+                shortages.append({
+                    'ingrediente': ingrediente,
+                    'required': required,
+                    'available': ingrediente.stock,
+                    'missing': required - ingrediente.stock,
+                    'productos': sorted(ingredient_products.get(ingrediente, [])),
+                })
+
+        if shortages:
+            # Render detail view with error info
+            items = list(pedido.items.select_related('producto'))
+            for item in items:
+                item.subtotal = item.producto.precio * item.cantidad
+            total = sum(item.subtotal for item in items)
+            return render(request, 'ventas/pedido_detail.html', {
+                'pedido': pedido,
+                'form': PedidoProductoForm(),
+                'items': items,
+                'total': total,
+                'confirm_errors': shortages,
+            })
+
+        # Si hay suficiencia, descontar stock y confirmar.
+        for ingrediente, required in required_per_ingredient.items():
+            ingrediente.stock -= required
+            ingrediente.save()
+
+        pedido.estado = 'en_preparacion'
+        pedido.save()
         return redirect('pedido_detail', pk=pk)
