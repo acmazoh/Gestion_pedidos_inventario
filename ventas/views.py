@@ -128,3 +128,15 @@ class PedidoProductoQuantityUpdateView(LoginRequiredMixin, View):
                 # eliminar si se reduce por debajo de 1
                 item.delete()
         return redirect('pedido_detail', pk=pedido_pk)
+
+
+class PedidoConfirmarView(LoginRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
+
+        # Solo puede confirmarse un pedido pendiente con al menos un producto.
+        if pedido.estado == 'pendiente' and pedido.items.exists():
+            pedido.estado = 'en_preparacion'
+            pedido.save()
+
+        return redirect('pedido_detail', pk=pk)

@@ -61,6 +61,15 @@
         {% endif %}
     </table>
 
+    <h2>Confirmar pedido</h2>
+
+    {% if pedido.estado == 'pendiente' and items %}
+    <form method="post" action="{% url 'pedido_confirm' pedido.id %}">
+        {% csrf_token %}
+        <button type="submit">enviar a cocina</button>
+    </form>
+    {% endif %}
+
     <h2>Agregar producto</h2>
     <form method="post">
         {% csrf_token %}
