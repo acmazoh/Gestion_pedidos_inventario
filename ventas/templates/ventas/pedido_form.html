@@ -11,6 +11,9 @@
         {{ form.as_p }}
         <button type="submit">Crear Pedido</button>
     </form>
-    <a href="{% url 'venta_list' %}">Volver</a>
+    <div>
+        <a href="{% url 'pedido_list' %}">Ver Pedidos</a> |
+        <a href="{% url 'venta_list' %}">Volver a Productos</a>
+    </div>
 </body>
 </html>

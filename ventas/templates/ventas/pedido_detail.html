@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalle del Pedido</title>
+</head>
+<body>
+    <h1>Pedido {{ pedido.id }} - {{ pedido.mesa_o_online }}</h1>
+
+    <nav>
+        <a href="{% url 'pedido_list' %}">Volver a la Lista de Pedidos</a> |
+        <a href="{% url 'venta_list' %}">Volver a Productos</a>
+    </nav>
+
+    <h2>Productos agregados</h2>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Precio unitario</th>
+                <th>Cantidad</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.producto.nombre }}</td>
+                <td>{{ item.producto.precio }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td>{{ item.subtotal }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No hay productos agregados a este pedido.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        {% if items %}
+        <tfoot>
+            <tr>
+                <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
+                <td><strong>{{ total }}</strong></td>
+            </tr>
+        </tfoot>
+        {% endif %}
+    </table>
+
+    <h2>Agregar producto</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Agregar</button>
+    </form>
+</body>
+</html>

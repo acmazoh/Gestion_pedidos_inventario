@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Pedidos</title>
+</head>
+<body>
+    <h1>Pedidos</h1>
+    <div>
+        <a href="{% url 'pedido_create' %}">Crear Nuevo Pedido</a> |
+        <a href="{% url 'venta_list' %}">Volver a Productos</a>
+    </div>
+
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Mesa / Online</th>
+                <th>Estado</th>
+                <th>Creado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for pedido in pedidos %}
+            <tr>
+                <td>{{ pedido.id }}</td>
+                <td>{{ pedido.mesa_o_online }}</td>
+                <td>{{ pedido.get_estado_display }}</td>
+                <td>{{ pedido.fecha_creacion }}</td>
+                <td><a href="{% url 'pedido_detail' pedido.id %}">Ver / Agregar Productos</a></td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="5">No hay pedidos creados aún.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
