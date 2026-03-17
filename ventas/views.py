@@ -1,6 +1,11 @@
 from django.shortcuts import render
 from django.views.generic import ListView
+from django.views.generic.edit import CreateView
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
 from products.models import Producto, Categoria
+from .models import Pedido
+from .forms import PedidoForm
 
 class ProductoVentaListView(ListView):
     model = Producto
@@ -24,3 +29,13 @@ class ProductoVentaListView(ListView):
             except Categoria.DoesNotExist:
                 pass
         return context
+
+class PedidoCreateView(LoginRequiredMixin, CreateView):
+    model = Pedido
+    form_class = PedidoForm
+    template_name = 'ventas/pedido_form.html'
+    success_url = reverse_lazy('venta_list')
+
+    def form_valid(self, form):
+        form.instance.creado_por = self.request.user
+        return super().form_valid(form)

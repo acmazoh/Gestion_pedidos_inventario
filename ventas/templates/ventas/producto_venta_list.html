@@ -6,6 +6,8 @@
 <body>
     <h1>Interfaz de Ventas - Productos Disponibles</h1>
     
+    <a href="{% url 'pedido_create' %}">Crear Nuevo Pedido</a>
+    
     <h2>Categorías</h2>
     <div>
         {% for categoria in categorias %}
