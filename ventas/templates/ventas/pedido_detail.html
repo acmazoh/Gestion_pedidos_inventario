@@ -20,6 +20,7 @@
                 <th>Precio unitario</th>
                 <th>Cantidad</th>
                 <th>Subtotal</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -29,17 +30,31 @@
                 <td>{{ item.producto.precio }}</td>
                 <td>{{ item.cantidad }}</td>
                 <td>{{ item.subtotal }}</td>
+                <td>
+                    <form method="post" action="{% url 'pedido_item_increment' pedido.id item.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" name="action" value="increment">+</button>
+                    </form>
+                    <form method="post" action="{% url 'pedido_item_decrement' pedido.id item.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" name="action" value="decrement">-</button>
+                    </form>
+                    <form method="post" action="{% url 'pedido_item_delete' pedido.id item.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit">Eliminar</button>
+                    </form>
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4">No hay productos agregados a este pedido.</td>
+                <td colspan="5">No hay productos agregados a este pedido.</td>
             </tr>
             {% endfor %}
         </tbody>
         {% if items %}
         <tfoot>
             <tr>
-                <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
+                <td colspan="4" style="text-align: right;"><strong>Total:</strong></td>
                 <td><strong>{{ total }}</strong></td>
             </tr>
         </tfoot>

@@ -11,7 +11,7 @@ class Pedido(models.Model):
         ('pagado', 'Pagado'),
     ]
 
-    mesa_o_online = models.CharField(max_length=100, help_text="Número de mesa o identificador de pedido en línea")
+    mesa_o_online = models.CharField(max_length=100, help_text="Cliente")
     estado = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
     creado_por = models.ForeignKey(User, on_delete=models.CASCADE)
     fecha_creacion = models.DateTimeField(auto_now_add=True)

@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.views import View
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView
 from django.urls import reverse_lazy
@@ -100,3 +101,30 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
             'items': items,
             'total': total,
         })
+
+
+class PedidoProductoDeleteView(LoginRequiredMixin, View):
+    def post(self, request, pedido_pk, item_pk, *args, **kwargs):
+        pedido = get_object_or_404(Pedido, pk=pedido_pk, creado_por=request.user)
+        item = get_object_or_404(PedidoProducto, pk=item_pk, pedido=pedido)
+        item.delete()
+        return redirect('pedido_detail', pk=pedido_pk)
+
+
+class PedidoProductoQuantityUpdateView(LoginRequiredMixin, View):
+    def post(self, request, pedido_pk, item_pk, *args, **kwargs):
+        pedido = get_object_or_404(Pedido, pk=pedido_pk, creado_por=request.user)
+        item = get_object_or_404(PedidoProducto, pk=item_pk, pedido=pedido)
+        action = request.POST.get('action')
+
+        if action == 'increment':
+            item.cantidad += 1
+            item.save()
+        elif action == 'decrement':
+            if item.cantidad > 1:
+                item.cantidad -= 1
+                item.save()
+            else:
+                # eliminar si se reduce por debajo de 1
+                item.delete()
+        return redirect('pedido_detail', pk=pedido_pk)
