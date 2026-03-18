@@ -15,7 +15,7 @@ class Ingrediente(models.Model):
 
 
 class Producto(models.Model):
-    nombre = models.CharField(max_length=200)
+    nombre = models.CharField(max_length=200, db_index=True)
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     descripcion = models.TextField(blank=True)

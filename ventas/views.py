@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 from django.views.generic import ListView
@@ -52,8 +53,12 @@ class PedidoListView(LoginRequiredMixin, ListView):
     context_object_name = 'pedidos'
 
     def get_queryset(self):
-        # Show only orders created by the current user
-        return super().get_queryset().filter(creado_por=self.request.user)
+        # select_related evita N+1 queries sobre creado_por
+        return (
+            super().get_queryset()
+            .filter(creado_por=self.request.user)
+            .select_related('creado_por')
+        )
 
 
 class PedidoDetailView(LoginRequiredMixin, ListView):
@@ -185,13 +190,14 @@ class PedidoConfirmarView(LoginRequiredMixin, View):
                 'confirm_errors': shortages,
             })
 
-        # Si hay suficiencia, descontar stock y confirmar.
-        for ingrediente, required in required_per_ingredient.items():
-            ingrediente.stock -= required
-            ingrediente.save()
-
-        pedido.estado = 'en_preparacion'
-        pedido.save()
+        # Si hay suficiencia, descontar stock y confirmar de forma atómica
+        # para garantizar disponibilidad sin interrupciones (H2).
+        with transaction.atomic():
+            for ingrediente, required in required_per_ingredient.items():
+                ingrediente.stock -= required
+                ingrediente.save()
+            pedido.estado = 'en_preparacion'
+            pedido.save()
         return redirect('pedido_detail', pk=pk)
 
 
@@ -203,5 +209,10 @@ class CocinaDashboardView(LoginRequiredMixin, ListView):
     context_object_name = 'pedidos'
 
     def get_queryset(self):
-        # Mostrar pedidos que fueron confirmados (en preparación).
-        return super().get_queryset().filter(estado='en_preparacion').order_by('fecha_creacion')
+        # prefetch_related reduce queries al listar items de cada pedido.
+        return (
+            super().get_queryset()
+            .filter(estado='en_preparacion')
+            .prefetch_related('items__producto')
+            .order_by('fecha_creacion')
+        )

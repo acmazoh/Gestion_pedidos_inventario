@@ -12,9 +12,9 @@ class Pedido(models.Model):
     ]
 
     mesa_o_online = models.CharField(max_length=100, help_text="Cliente")
-    estado = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='pendiente', db_index=True)
     creado_por = models.ForeignKey(User, on_delete=models.CASCADE)
-    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True, db_index=True)
     productos = models.ManyToManyField(Producto, through='PedidoProducto', blank=True)
 
     def __str__(self):
