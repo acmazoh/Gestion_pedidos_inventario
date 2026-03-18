@@ -5,6 +5,7 @@
 </head>
 <body>
     <h1>Productos</h1>
+    <div style="float:right;">Hola, {{ request.user.username }} | <a href="{% url 'logout' %}">Cerrar sesión</a></div>
     <a href="{% url 'producto_create' %}">Crear Nuevo Producto</a>
     <ul>
         {% for producto in productos %}
