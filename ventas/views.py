@@ -193,3 +193,15 @@ class PedidoConfirmarView(LoginRequiredMixin, View):
         pedido.estado = 'en_preparacion'
         pedido.save()
         return redirect('pedido_detail', pk=pk)
+
+
+class CocinaDashboardView(LoginRequiredMixin, ListView):
+    """Interfaz de cocina: muestra los pedidos confirmados en tiempo real."""
+
+    model = Pedido
+    template_name = 'ventas/cocina_dashboard.html'
+    context_object_name = 'pedidos'
+
+    def get_queryset(self):
+        # Mostrar pedidos que fueron confirmados (en preparación).
+        return super().get_queryset().filter(estado='en_preparacion').order_by('fecha_creacion')

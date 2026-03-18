@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Cocina - Pedidos en Preparación</title>
+</head>
+<body>
+    <h1>Panel de Cocina</h1>
+    <nav>
+        <a href="{% url 'pedido_list' %}">Ver Pedidos (Mesero)</a> |
+        <a href="{% url 'venta_list' %}">Ver Productos</a>
+    </nav>
+
+    <p>Esta pantalla se actualiza automáticamente cada <strong>10 segundos</strong> para mostrar los pedidos recién confirmados.</p>
+
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Mesa / Online</th>
+                <th>Hora de creación</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pedido in pedidos %}
+            <tr>
+                <td>{{ pedido.id }}</td>
+                <td>{{ pedido.mesa_o_online }}</td>
+                <td>{{ pedido.fecha_creacion }}</td>
+                <td>{{ pedido.get_estado_display }}</td>
+                <td><a href="{% url 'pedido_detail' pedido.id %}">Ver detalles</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">No hay pedidos en preparación en este momento.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        // Refresca la página para que la cocina vea los pedidos nuevos confirmados en tiempo real.
+        setTimeout(function() {
+            window.location.reload();
+        }, 10000);
+    </script>
+</body>
+</html>
