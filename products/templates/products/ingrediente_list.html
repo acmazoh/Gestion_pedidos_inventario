@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Ingredientes</title>
+</head>
+<body>
+    <h1>Ingredientes</h1>
+    <a href="{% url 'ingrediente_create' %}">Crear ingrediente</a> |
+    <a href="{% url 'producto_list' %}">Volver a productos</a>
+
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Stock</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ingrediente in ingredientes %}
+            <tr>
+                <td>{{ ingrediente.nombre }}</td>
+                <td>{{ ingrediente.stock }}</td>
+                <td>
+                    <a href="{% url 'ingrediente_update' ingrediente.pk %}">Editar</a>
+                    <a href="{% url 'ingrediente_delete' ingrediente.pk %}">Eliminar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">No hay ingredientes registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

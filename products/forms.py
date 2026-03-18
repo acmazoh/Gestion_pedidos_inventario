@@ -1,5 +1,5 @@
 from django import forms
-from .models import Producto
+from .models import Producto, Ingrediente
 
 class ProductoForm(forms.ModelForm):
     class Meta:
@@ -9,3 +9,9 @@ class ProductoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['ingredientes'].required = False
+
+
+class IngredienteForm(forms.ModelForm):
+    class Meta:
+        model = Ingrediente
+        fields = ['nombre', 'stock']

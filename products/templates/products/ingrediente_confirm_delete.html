@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Eliminar Ingrediente</title>
+</head>
+<body>
+    <h1>Eliminar Ingrediente</h1>
+    <p>¿Seguro que deseas eliminar "{{ object.nombre }}"?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Sí, eliminar</button>
+    </form>
+    <a href="{% url 'ingrediente_list' %}">Cancelar</a>
+</body>
+</html>
