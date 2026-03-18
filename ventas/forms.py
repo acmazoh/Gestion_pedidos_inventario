@@ -15,3 +15,12 @@ class PedidoForm(forms.ModelForm):
 class PedidoProductoForm(forms.Form):
     producto = forms.ModelChoiceField(queryset=Producto.objects.all(), label='Producto')
     cantidad = forms.IntegerField(min_value=1, initial=1, label='Cantidad')
+
+
+class PagoPedidoForm(forms.ModelForm):
+    class Meta:
+        model = Pedido
+        fields = ['metodo_pago']
+        labels = {
+            'metodo_pago': 'Método de pago',
+        }

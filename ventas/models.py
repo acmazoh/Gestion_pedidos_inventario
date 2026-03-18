@@ -11,10 +11,18 @@ class Pedido(models.Model):
         ('pagado', 'Pagado'),
     ]
 
+    METODOS_PAGO = [
+        ('efectivo', 'Efectivo'),
+        ('tarjeta', 'Tarjeta'),
+    ]
+
     mesa_o_online = models.CharField(max_length=100, help_text="Cliente")
     estado = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
     creado_por = models.ForeignKey(User, on_delete=models.CASCADE)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    metodo_pago = models.CharField(max_length=20, choices=METODOS_PAGO, blank=True)
+    fecha_pago = models.DateTimeField(null=True, blank=True)
+    cobrado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='pedidos_cobrados')
     productos = models.ManyToManyField(Producto, through='PedidoProducto', blank=True)
 
     def __str__(self):

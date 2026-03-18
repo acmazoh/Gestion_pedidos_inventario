@@ -18,6 +18,7 @@
                 <th>ID</th>
                 <th>Mesa / Online</th>
                 <th>Estado</th>
+                <th>Método de pago</th>
                 <th>Creado</th>
                 <th>Acciones</th>
             </tr>
@@ -28,12 +29,13 @@
                 <td>{{ pedido.id }}</td>
                 <td>{{ pedido.mesa_o_online }}</td>
                 <td>{{ pedido.get_estado_display }}</td>
+                <td>{{ pedido.get_metodo_pago_display|default:'-' }}</td>
                 <td>{{ pedido.fecha_creacion }}</td>
                 <td><a href="{% url 'pedido_detail' pedido.id %}">Ver / Agregar Productos</a></td>
             </tr>
         {% empty %}
             <tr>
-                <td colspan="5">No hay pedidos creados aún.</td>
+                <td colspan="6">No hay pedidos creados aún.</td>
             </tr>
         {% endfor %}
         </tbody>

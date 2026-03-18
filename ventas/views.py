@@ -3,10 +3,21 @@ from django.views import View
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView
 from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.utils import timezone
 from products.models import Producto, Categoria
 from .models import Pedido, PedidoProducto
-from .forms import PedidoForm, PedidoProductoForm
+from .forms import PedidoForm, PedidoProductoForm, PagoPedidoForm
+
+
+def is_cashier_or_admin(user):
+    return user.is_staff or user.groups.filter(name='Cajero').exists()
+
+
+def get_pedido_for_user(user, pk):
+    if is_cashier_or_admin(user):
+        return get_object_or_404(Pedido, pk=pk)
+    return get_object_or_404(Pedido, pk=pk, creado_por=user)
 
 
 class ProductoVentaListView(ListView):
@@ -52,7 +63,9 @@ class PedidoListView(LoginRequiredMixin, ListView):
     context_object_name = 'pedidos'
 
     def get_queryset(self):
-        # Show only orders created by the current user
+        # Cajeros/administradores pueden visualizar todos los pedidos.
+        if is_cashier_or_admin(self.request.user):
+            return super().get_queryset()
         return super().get_queryset().filter(creado_por=self.request.user)
 
 
@@ -62,7 +75,7 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
     context_object_name = 'items'
 
     def get(self, request, pk, *args, **kwargs):
-        pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
+        pedido = get_pedido_for_user(request.user, pk)
         form = PedidoProductoForm()
         items = list(pedido.items.select_related('producto'))
         for item in items:
@@ -76,7 +89,9 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
         })
 
     def post(self, request, pk, *args, **kwargs):
-        pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
+        pedido = get_pedido_for_user(request.user, pk)
+        if pedido.estado != 'pendiente':
+            return redirect('pedido_detail', pk=pedido.pk)
         form = PedidoProductoForm(request.POST)
         if form.is_valid():
             producto = form.cleaned_data['producto']
@@ -105,7 +120,7 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
 
 class PedidoProductoDeleteView(LoginRequiredMixin, View):
     def post(self, request, pedido_pk, item_pk, *args, **kwargs):
-        pedido = get_object_or_404(Pedido, pk=pedido_pk, creado_por=request.user)
+        pedido = get_pedido_for_user(request.user, pedido_pk)
         if pedido.estado != 'pendiente':
             return redirect('pedido_detail', pk=pedido_pk)
         item = get_object_or_404(PedidoProducto, pk=item_pk, pedido=pedido)
@@ -115,7 +130,7 @@ class PedidoProductoDeleteView(LoginRequiredMixin, View):
 
 class PedidoProductoQuantityUpdateView(LoginRequiredMixin, View):
     def post(self, request, pedido_pk, item_pk, *args, **kwargs):
-        pedido = get_object_or_404(Pedido, pk=pedido_pk, creado_por=request.user)
+        pedido = get_pedido_for_user(request.user, pedido_pk)
         if pedido.estado != 'pendiente':
             return redirect('pedido_detail', pk=pedido_pk)
         item = get_object_or_404(PedidoProducto, pk=item_pk, pedido=pedido)
@@ -136,7 +151,7 @@ class PedidoProductoQuantityUpdateView(LoginRequiredMixin, View):
 
 class PedidoConfirmarView(LoginRequiredMixin, View):
     def post(self, request, pk, *args, **kwargs):
-        pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
+        pedido = get_pedido_for_user(request.user, pk)
 
         # Solo puede confirmarse un pedido pendiente con al menos un producto.
         if pedido.estado != 'pendiente' or not pedido.items.exists():
@@ -192,6 +207,27 @@ class PedidoConfirmarView(LoginRequiredMixin, View):
 
         pedido.estado = 'en_preparacion'
         pedido.save()
+        return redirect('pedido_detail', pk=pk)
+
+
+class PedidoCobroView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return is_cashier_or_admin(self.request.user)
+
+    def post(self, request, pk, *args, **kwargs):
+        pedido = get_object_or_404(Pedido, pk=pk)
+
+        if pedido.estado not in ['en_preparacion', 'listo'] or pedido.metodo_pago:
+            return redirect('pedido_detail', pk=pk)
+
+        form = PagoPedidoForm(request.POST, instance=pedido)
+        if form.is_valid():
+            pago = form.save(commit=False)
+            pago.estado = 'pagado'
+            pago.fecha_pago = timezone.now()
+            pago.cobrado_por = request.user
+            pago.save()
+
         return redirect('pedido_detail', pk=pk)
 
 

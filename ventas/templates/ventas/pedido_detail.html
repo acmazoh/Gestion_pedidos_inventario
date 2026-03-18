@@ -86,14 +86,39 @@
     <form method="post" action="{% url 'pedido_confirm' pedido.id %}">
         {% csrf_token %}
         <button type="submit">enviar a cocina</button>
-    </form>    {% elif pedido.estado != 'pendiente' %}
-    <p>Estado actual: <strong>{{ pedido.get_estado_display }}</strong></p>    {% endif %}
+    </form>
+    {% elif pedido.estado != 'pendiente' %}
+    <p>Estado actual: <strong>{{ pedido.get_estado_display }}</strong></p>
+    {% endif %}
+
+    <h2>Registrar pago</h2>
+    {% if pedido.metodo_pago %}
+    <p>Método registrado: <strong>{{ pedido.get_metodo_pago_display }}</strong></p>
+    <p>Fecha de pago: <strong>{{ pedido.fecha_pago }}</strong></p>
+    {% elif pedido.estado == 'en_preparacion' or pedido.estado == 'listo' %}
+    <form method="post" action="{% url 'pedido_cobrar' pedido.id %}">
+        {% csrf_token %}
+        <label for="metodo_pago">Método de pago:</label>
+        <select name="metodo_pago" id="metodo_pago" required>
+            <option value="">Seleccione</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="tarjeta">Tarjeta</option>
+        </select>
+        <button type="submit">Registrar pago</button>
+    </form>
+    {% else %}
+    <p>El pago se habilita cuando el pedido está en preparación o listo.</p>
+    {% endif %}
 
     <h2>Agregar producto</h2>
+    {% if pedido.estado == 'pendiente' %}
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Agregar</button>
     </form>
+    {% else %}
+    <p>No se pueden agregar productos porque el pedido ya fue confirmado.</p>
+    {% endif %}
 </body>
 </html>
