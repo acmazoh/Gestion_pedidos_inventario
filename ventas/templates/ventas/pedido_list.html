@@ -6,7 +6,6 @@
 </head>
 <body>
     <h1>Pedidos</h1>
-    <div style="float:right;">Hola, {{ request.user.username }} | <a href="{% url 'logout' %}">Cerrar sesión</a></div>
     <div>
         <a href="{% url 'pedido_create' %}">Crear Nuevo Pedido</a> |
         <a href="{% url 'venta_list' %}">Volver a Productos</a> |
