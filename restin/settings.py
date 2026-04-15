@@ -99,6 +99,16 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/ventas/pedidos/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# Use bcrypt as primary password hasher (RF-13)
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+]
+
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "UTC"

@@ -2,16 +2,25 @@
 <html>
 <head>
     <title>Productos Disponibles - POS</title>
+    <style>
+        body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; }
+        nav { margin-bottom: 16px; }
+        .logout-btn { float: right; }
+    </style>
 </head>
 <body>
-    <h1>Interfaz de Ventas - Productos Disponibles</h1>
-    
     <nav>
         <a href="{% url 'pedido_list' %}">Ver Pedidos</a> |
-        <a href="{% url 'pedido_create' %}">Crear Nuevo Pedido</a> |
-        <a href="{% url 'cocina_dashboard' %}">Vista de Cocina</a>
+        <a href="{% url 'pedido_create' %}">Nueva Orden</a> |
+        <a href="{% url 'cocina_dashboard' %}">Cocina</a>
+        <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
+            {% csrf_token %}
+            <button type="submit" style="background:none;border:none;color:#c00;cursor:pointer;padding:0;">Cerrar Sesión ({{ request.user.username }})</button>
+        </form>
     </nav>
-    
+
+    <h1>Interfaz de Ventas — Productos Disponibles</h1>
+
     <h2>Categorías</h2>
     <div>
         {% for categoria in categorias %}
@@ -24,7 +33,7 @@
     <ul>
         {% for producto in productos %}
         <li>
-            <strong>{{ producto.nombre }}</strong> - {{ producto.precio }}<br>
+            <strong>{{ producto.nombre }}</strong> - ${{ producto.precio }}<br>
             Categoría: {{ producto.categoria }}<br>
             Descripción: {{ producto.descripcion|default:"Sin descripción" }}<br>
             Ingredientes: {% for ing in producto.ingredientes.all %}{{ ing.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}

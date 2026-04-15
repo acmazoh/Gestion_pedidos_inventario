@@ -3,20 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <title>Lista de Pedidos</title>
+    <style>
+        body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; }
+        nav { margin-bottom: 16px; }
+        .logout-btn { float:right; }
+        table { width:100%; border-collapse:collapse; }
+        th, td { border:1px solid #ddd; padding:8px; text-align:left; }
+        th { background:#f0f0f0; }
+        .msg-success { background:#d4edda; border:1px solid #28a745; padding:8px 12px; border-radius:4px; margin-bottom:12px; }
+        .msg-error   { background:#ffe6e6; border:1px solid #cc0000; padding:8px 12px; border-radius:4px; margin-bottom:12px; }
+    </style>
 </head>
 <body>
-    <h1>Pedidos</h1>
-    <div>
-        <a href="{% url 'pedido_create' %}">Crear Nuevo Pedido</a> |
-        <a href="{% url 'venta_list' %}">Volver a Productos</a> |
-        <a href="{% url 'cocina_dashboard' %}">Vista de Cocina</a>
-    </div>
+    <nav>
+        <a href="{% url 'pedido_create' %}">➕ Nueva Orden</a> |
+        <a href="{% url 'venta_list' %}">Productos</a> |
+        <a href="{% url 'cocina_dashboard' %}">Cocina</a>
+        <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
+            {% csrf_token %}
+            <button type="submit" style="background:none;border:none;color:#c00;cursor:pointer;padding:0;">Cerrar Sesión ({{ request.user.username }})</button>
+        </form>
+    </nav>
 
-    <table border="1" cellpadding="8" cellspacing="0">
+    <h1>Pedidos</h1>
+
+    {% for message in messages %}
+    <div class="{% if message.tags == 'error' %}msg-error{% else %}msg-success{% endif %}">{{ message }}</div>
+    {% endfor %}
+
+    <table>
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Mesa / Online</th>
+                <th>Mesa / Cliente</th>
                 <th>Estado</th>
                 <th>Creado</th>
                 <th>Acciones</th>
@@ -28,8 +47,8 @@
                 <td>{{ pedido.id }}</td>
                 <td>{{ pedido.mesa_o_online }}</td>
                 <td>{{ pedido.get_estado_display }}</td>
-                <td>{{ pedido.fecha_creacion }}</td>
-                <td><a href="{% url 'pedido_detail' pedido.id %}">Ver / Agregar Productos</a></td>
+                <td>{{ pedido.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                <td><a href="{% url 'pedido_detail' pedido.id %}">Ver / Editar</a></td>
             </tr>
         {% empty %}
             <tr>

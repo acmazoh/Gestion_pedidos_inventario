@@ -5,10 +5,64 @@ from django.views import View
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView
 from django.urls import reverse_lazy
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView
+from django.contrib.auth.forms import AuthenticationForm
+from django.core.cache import cache
 from products.models import Producto, Categoria, MovimientoInventario
 from .models import Pedido, PedidoProducto, Transaccion
 from .forms import PedidoForm, PedidoProductoForm
+
+
+# ── RF-13: Autenticación ─────────────────────────────────────────────────────
+
+class RateLimitedLoginView(LoginView):
+    """Login con rate limiting: bloquea IP tras 5 intentos fallidos por 15 min."""
+
+    template_name = 'registration/login.html'
+    _MAX_ATTEMPTS = 5
+    _BLOCK_SECONDS = 900  # 15 minutos
+
+    def _cache_key(self):
+        ip = self.request.META.get('HTTP_X_FORWARDED_FOR', self.request.META.get('REMOTE_ADDR', 'unknown'))
+        ip = ip.split(',')[0].strip()
+        return f'login_attempts_{ip}'
+
+    def get(self, request, *args, **kwargs):
+        key = self._cache_key()
+        attempts = cache.get(key, 0)
+        if attempts >= self._MAX_ATTEMPTS:
+            remaining = cache.ttl(key) if hasattr(cache, 'ttl') else self._BLOCK_SECONDS
+            form = AuthenticationForm()
+            return render(request, self.template_name, {
+                'form': form,
+                'rate_limited': True,
+            })
+        return super().get(request, *args, **kwargs)
+
+    def form_invalid(self, form):
+        key = self._cache_key()
+        attempts = cache.get(key, 0) + 1
+        cache.set(key, attempts, self._BLOCK_SECONDS)
+        if attempts >= self._MAX_ATTEMPTS:
+            return render(self.request, self.template_name, {
+                'form': form,
+                'rate_limited': True,
+            })
+        form.error_messages['invalid_login'] = (
+            f'Usuario o contraseña incorrectos. '
+            f'Intentos restantes: {self._MAX_ATTEMPTS - attempts}.'
+        )
+        return super().form_invalid(form)
+
+    def form_valid(self, form):
+        # Limpiar contador al iniciar sesión exitosamente
+        cache.delete(self._cache_key())
+        return super().form_valid(form)
+
+
+# ── RF-03/04/05: Ventas ──────────────────────────────────────────────────────
 
 
 class ProductoVentaListView(ListView):
@@ -42,7 +96,9 @@ class PedidoCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creado_por = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        messages.success(self.request, f'Orden #{self.object.pk} creada. Ahora agrega los productos.')
+        return response
 
     def get_success_url(self):
         return reverse_lazy('pedido_detail', kwargs={'pk': self.object.pk})
@@ -141,7 +197,12 @@ class PedidoConfirmarView(LoginRequiredMixin, View):
         pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
 
         # Solo puede confirmarse un pedido pendiente con al menos un producto.
-        if pedido.estado != 'pendiente' or not pedido.items.exists():
+        if pedido.estado != 'pendiente':
+            messages.error(request, 'Esta orden ya no puede modificarse (estado: {}).'.format(
+                pedido.get_estado_display()))
+            return redirect('pedido_detail', pk=pk)
+        if not pedido.items.exists():
+            messages.error(request, 'No puedes confirmar una orden vacía. Agrega al menos un producto.')
             return redirect('pedido_detail', pk=pk)
 
         # Calcular requisitos de ingredientes para el pedido completo
@@ -201,6 +262,7 @@ class PedidoConfirmarView(LoginRequiredMixin, View):
 
         pedido.estado = 'en_preparacion'
         pedido.save()
+        messages.success(request, f'Orden #{pedido.pk} confirmada y enviada a cocina.')
         return redirect('pedido_detail', pk=pk)
 
 
