@@ -3,18 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel de Cocina</title>
+    <style>
+        body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; }
+        nav { margin-bottom: 16px; }
+        .logout-btn { float: right; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f0f0f0; }
+    </style>
 </head>
 <body>
-    <h1>Panel de Cocina</h1>
     <nav>
-        <a href="{% url 'pedido_list' %}">Ver Pedidos (Mesero)</a> |
-        <a href="{% url 'venta_list' %}">Ver Productos</a> |
+        <a href="{% url 'pedido_list' %}">Vista Mesero</a> |
+        <a href="{% url 'venta_list' %}">Productos</a> |
         <a href="{% url 'historial_ventas' %}">Historial de Ventas</a>
+        <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
+            {% csrf_token %}
+            <button type="submit" style="background:none;border:none;color:#c00;cursor:pointer;padding:0;">Cerrar Sesión ({{ request.user.username }})</button>
+        </form>
     </nav>
 
+    <h1>Panel de Cocina</h1>
     <p>Esta pantalla se actualiza automáticamente cada <strong>10 segundos</strong>.</p>
 
-    <table border="1" cellpadding="8" cellspacing="0">
+    <table>
         <thead>
             <tr>
                 <th>ID</th>

@@ -2,10 +2,26 @@
 <html>
 <head>
     <title>Historial de Ventas</title>
+    <style>
+        body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; }
+        nav { margin-bottom: 16px; }
+        .logout-btn { float: right; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f0f0f0; }
+    </style>
 </head>
 <body>
+    <nav>
+        <a href="{% url 'pedido_list' %}">← Pedidos</a> |
+        <a href="{% url 'cocina_dashboard' %}">Cocina</a>
+        <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
+            {% csrf_token %}
+            <button type="submit" style="background:none;border:none;color:#c00;cursor:pointer;padding:0;">Cerrar Sesión ({{ request.user.username }})</button>
+        </form>
+    </nav>
+
     <h1>Historial de Ventas</h1>
-    <a href="{% url 'pedido_list' %}">Volver a Pedidos</a>
 
     <form method="get" style="margin: 12px 0;">
         <label>Desde: <input type="date" name="desde" value="{{ desde }}"></label>
@@ -22,7 +38,7 @@
 
     {% if transacciones %}
     <p><strong>Total del período: ${{ total_periodo }}</strong></p>
-    <table border="1" cellpadding="6" cellspacing="0">
+    <table>
         <thead>
             <tr>
                 <th>Fecha</th>
