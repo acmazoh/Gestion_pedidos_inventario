@@ -156,8 +156,7 @@
         searchInput.addEventListener('input', function () {
             var query = this.value.toLowerCase();
             var current = select.value;
-            // Remove all options
-            while (select.options.length) select.remove(0);
+            select.innerHTML = '';
             allOptions.forEach(function (o) {
                 if (!query || o.text.toLowerCase().indexOf(query) !== -1) {
                     var opt = document.createElement('option');

@@ -25,15 +25,14 @@ class RateLimitedLoginView(LoginView):
     _BLOCK_SECONDS = 900  # 15 minutos
 
     def _cache_key(self):
-        ip = self.request.META.get('HTTP_X_FORWARDED_FOR', self.request.META.get('REMOTE_ADDR', 'unknown'))
-        ip = ip.split(',')[0].strip()
+        # Use REMOTE_ADDR only; do not trust X-Forwarded-For without a trusted proxy.
+        ip = self.request.META.get('REMOTE_ADDR', 'unknown')
         return f'login_attempts_{ip}'
 
     def get(self, request, *args, **kwargs):
         key = self._cache_key()
         attempts = cache.get(key, 0)
         if attempts >= self._MAX_ATTEMPTS:
-            remaining = cache.ttl(key) if hasattr(cache, 'ttl') else self._BLOCK_SECONDS
             form = AuthenticationForm()
             return render(request, self.template_name, {
                 'form': form,
