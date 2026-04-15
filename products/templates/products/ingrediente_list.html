@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestión de Ingredientes</title>
+</head>
+<body>
+    <h1>Ingredientes</h1>
+    <a href="{% url 'ingrediente_create' %}">Agregar Ingrediente</a>
+    &nbsp;|&nbsp;
+    <a href="{% url 'movimiento_list' %}">Ver historial de movimientos</a>
+    &nbsp;|&nbsp;
+    <a href="{% url 'producto_list' %}">Ir a Productos</a>
+
+    {% if ingredientes %}
+    <table border="1" cellpadding="6" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Unidad</th>
+                <th>Stock actual</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ingrediente in ingredientes %}
+            <tr {% if ingrediente.stock <= stock_minimo %}style="background-color: #ffe0e0;"{% endif %}>
+                <td>{{ ingrediente.nombre }}</td>
+                <td>{{ ingrediente.get_unidad_medida_display }}</td>
+                <td>{{ ingrediente.stock }}</td>
+                <td>
+                    {% if ingrediente.stock == 0 %}
+                        ⛔ Sin stock
+                    {% elif ingrediente.stock <= stock_minimo %}
+                        ⚠️ Stock bajo
+                    {% else %}
+                        ✅ OK
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'ingrediente_update' ingrediente.pk %}">Editar</a>
+                    &nbsp;|&nbsp;
+                    <a href="{% url 'ingrediente_delete' ingrediente.pk %}">Eliminar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No hay ingredientes registrados.</p>
+    {% endif %}
+</body>
+</html>

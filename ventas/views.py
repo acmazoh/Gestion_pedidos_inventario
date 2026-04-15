@@ -1,11 +1,13 @@
+import csv
+from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
-from products.models import Producto, Categoria
-from .models import Pedido, PedidoProducto
+from products.models import Producto, Categoria, MovimientoInventario
+from .models import Pedido, PedidoProducto, Transaccion
 from .forms import PedidoForm, PedidoProductoForm
 
 
@@ -189,6 +191,13 @@ class PedidoConfirmarView(LoginRequiredMixin, View):
         for ingrediente, required in required_per_ingredient.items():
             ingrediente.stock -= required
             ingrediente.save()
+            MovimientoInventario.objects.create(
+                ingrediente=ingrediente,
+                tipo='descuento',
+                cantidad=-required,
+                stock_resultante=ingrediente.stock,
+                pedido_id=pedido.pk,
+            )
 
         pedido.estado = 'en_preparacion'
         pedido.save()
@@ -203,5 +212,97 @@ class CocinaDashboardView(LoginRequiredMixin, ListView):
     context_object_name = 'pedidos'
 
     def get_queryset(self):
-        # Mostrar pedidos que fueron confirmados (en preparación).
-        return super().get_queryset().filter(estado='en_preparacion').order_by('fecha_creacion')
+        # Mostrar pedidos que fueron confirmados (en preparación) y listos.
+        return super().get_queryset().filter(
+            estado__in=['en_preparacion', 'listo']
+        ).order_by('fecha_creacion')
+
+
+class PedidoMarcarListoView(LoginRequiredMixin, View):
+    """Cocina marca el pedido como 'listo'."""
+    def post(self, request, pk, *args, **kwargs):
+        pedido = get_object_or_404(Pedido, pk=pk)
+        if pedido.estado == 'en_preparacion':
+            pedido.estado = 'listo'
+            pedido.save()
+        return redirect('cocina_dashboard')
+
+
+class PedidoMarcarEntregadaView(LoginRequiredMixin, View):
+    """Marca el pedido como 'entregada' y registra la Transaccion automáticamente (RF-11)."""
+    def post(self, request, pk, *args, **kwargs):
+        pedido = get_object_or_404(Pedido, pk=pk)
+        if pedido.estado == 'listo':
+            pedido.estado = 'entregada'
+            pedido.save()
+            total = sum(
+                item.producto.precio * item.cantidad
+                for item in pedido.items.select_related('producto')
+            )
+            Transaccion.objects.get_or_create(pedido=pedido, defaults={'total': total})
+        return redirect('cocina_dashboard')
+
+
+class HistorialVentasView(LoginRequiredMixin, ListView):
+    """Historial de ventas (RF-11)."""
+    model = Transaccion
+    template_name = 'ventas/historial_ventas.html'
+    context_object_name = 'transacciones'
+    paginate_by = 20
+
+    def get_queryset(self):
+        qs = Transaccion.objects.select_related('pedido').order_by('-fecha')
+        fecha_desde = self.request.GET.get('desde')
+        fecha_hasta = self.request.GET.get('hasta')
+        if fecha_desde:
+            qs = qs.filter(fecha__date__gte=fecha_desde)
+        if fecha_hasta:
+            qs = qs.filter(fecha__date__lte=fecha_hasta)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['desde'] = self.request.GET.get('desde', '')
+        context['hasta'] = self.request.GET.get('hasta', '')
+        context['total_periodo'] = sum(t.total for t in self.get_queryset())
+        # Adjuntar items a cada transacción para mostrarlos en el template
+        for t in context['transacciones']:
+            t.items_pedido = t.pedido.items.select_related('producto').all()
+        return context
+
+
+class ExportarHistorialCSVView(LoginRequiredMixin, View):
+    """Exporta el historial de ventas filtrado por fecha en formato CSV (RF-11).
+    Acepta los mismos parámetros ?desde= y ?hasta= que HistorialVentasView.
+    Genera un archivo descargable con una fila por producto vendido.
+    """
+    def get(self, request, *args, **kwargs):
+        qs = Transaccion.objects.select_related('pedido').order_by('-fecha')
+        fecha_desde = request.GET.get('desde')
+        fecha_hasta = request.GET.get('hasta')
+        if fecha_desde:
+            qs = qs.filter(fecha__date__gte=fecha_desde)
+        if fecha_hasta:
+            qs = qs.filter(fecha__date__lte=fecha_hasta)
+
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="historial_ventas.csv"'
+        # BOM para compatibilidad con Excel
+        response.write('\ufeff')
+
+        writer = csv.writer(response)
+        writer.writerow(['Fecha', 'Pedido', 'Mesa/Cliente', 'Producto', 'Cantidad', 'Total pedido'])
+
+        for t in qs:
+            items = t.pedido.items.select_related('producto').all()
+            for item in items:
+                writer.writerow([
+                    t.fecha.strftime('%d/%m/%Y %H:%M'),
+                    f'#{t.pedido.id}',
+                    t.pedido.mesa_o_online,
+                    item.producto.nombre,
+                    item.cantidad,
+                    t.total,
+                ])
+
+        return response

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Historial de Movimientos de Inventario</title>
+</head>
+<body>
+    <h1>Historial de Movimientos de Inventario</h1>
+    <a href="{% url 'ingrediente_list' %}">Volver a Ingredientes</a>
+
+    {% if movimientos %}
+    <table border="1" cellpadding="6" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Ingrediente</th>
+                <th>Tipo</th>
+                <th>Cantidad</th>
+                <th>Stock resultante</th>
+                <th>Pedido</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mov in movimientos %}
+            <tr {% if mov.stock_resultante <= 5 %}style="background-color: #ffe0e0;"{% endif %}>
+                <td>{{ mov.fecha|date:"d/m/Y H:i" }}</td>
+                <td>{{ mov.ingrediente.nombre }}</td>
+                <td>{{ mov.get_tipo_display }}</td>
+                <td {% if mov.cantidad < 0 %}style="color:red;"{% else %}style="color:green;"{% endif %}>
+                    {{ mov.cantidad }}
+                </td>
+                <td>
+                    {{ mov.stock_resultante }}
+                    {% if mov.stock_resultante == 0 %}⛔{% elif mov.stock_resultante <= 5 %}⚠️{% endif %}
+                </td>
+                <td>{% if mov.pedido_id %}#{{ mov.pedido_id }}{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if is_paginated %}
+    <div>
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+        {% endif %}
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <p>No hay movimientos registrados todavía.</p>
+    {% endif %}
+</body>
+</html>

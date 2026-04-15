@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Historial de Ventas</title>
+</head>
+<body>
+    <h1>Historial de Ventas</h1>
+    <a href="{% url 'pedido_list' %}">Volver a Pedidos</a>
+
+    <form method="get" style="margin: 12px 0;">
+        <label>Desde: <input type="date" name="desde" value="{{ desde }}"></label>
+        &nbsp;
+        <label>Hasta: <input type="date" name="hasta" value="{{ hasta }}"></label>
+        &nbsp;
+        <button type="submit">Filtrar</button>
+        {% if desde or hasta %}<a href="{% url 'historial_ventas' %}">Limpiar</a>{% endif %}
+    </form>
+
+    <a href="{% url 'historial_ventas_csv' %}{% if desde or hasta %}?desde={{ desde }}&hasta={{ hasta }}{% endif %}">
+        ⬇ Exportar CSV
+    </a>
+
+    {% if transacciones %}
+    <p><strong>Total del período: ${{ total_periodo }}</strong></p>
+    <table border="1" cellpadding="6" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Pedido</th>
+                <th>Mesa / Cliente</th>
+                <th>Productos</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in transacciones %}
+            <tr>
+                <td>{{ t.fecha|date:"d/m/Y H:i" }}</td>
+                <td>#{{ t.pedido.id }}</td>
+                <td>{{ t.pedido.mesa_o_online }}</td>
+                <td>
+                    {% for item in t.items_pedido %}
+                        {{ item.producto.nombre }} x{{ item.cantidad }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+                <td>${{ t.total }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if is_paginated %}
+    <div>
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&desde={{ desde }}&hasta={{ hasta }}">Anterior</a>
+        {% endif %}
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&desde={{ desde }}&hasta={{ hasta }}">Siguiente</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <p>No hay ventas registradas en ese período.</p>
+    {% endif %}
+</body>
+</html>

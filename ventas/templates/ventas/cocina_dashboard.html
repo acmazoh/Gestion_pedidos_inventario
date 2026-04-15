@@ -2,23 +2,24 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Cocina - Pedidos en Preparación</title>
+    <title>Panel de Cocina</title>
 </head>
 <body>
     <h1>Panel de Cocina</h1>
     <nav>
         <a href="{% url 'pedido_list' %}">Ver Pedidos (Mesero)</a> |
-        <a href="{% url 'venta_list' %}">Ver Productos</a>
+        <a href="{% url 'venta_list' %}">Ver Productos</a> |
+        <a href="{% url 'historial_ventas' %}">Historial de Ventas</a>
     </nav>
 
-    <p>Esta pantalla se actualiza automáticamente cada <strong>10 segundos</strong> para mostrar los pedidos recién confirmados.</p>
+    <p>Esta pantalla se actualiza automáticamente cada <strong>10 segundos</strong>.</p>
 
     <table border="1" cellpadding="8" cellspacing="0">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Mesa / Online</th>
-                <th>Hora de creación</th>
+                <th>Mesa / Cliente</th>
+                <th>Hora</th>
                 <th>Estado</th>
                 <th>Acciones</th>
             </tr>
@@ -28,23 +29,35 @@
             <tr>
                 <td>{{ pedido.id }}</td>
                 <td>{{ pedido.mesa_o_online }}</td>
-                <td>{{ pedido.fecha_creacion }}</td>
+                <td>{{ pedido.fecha_creacion|date:"H:i" }}</td>
                 <td>{{ pedido.get_estado_display }}</td>
-                <td><a href="{% url 'pedido_detail' pedido.id %}">Ver detalles</a></td>
+                <td>
+                    <a href="{% url 'pedido_detail' pedido.id %}">Ver</a>
+                    {% if pedido.estado == 'en_preparacion' %}
+                    &nbsp;
+                    <form method="post" action="{% url 'pedido_listo' pedido.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit">✔ Marcar Listo</button>
+                    </form>
+                    {% elif pedido.estado == 'listo' %}
+                    &nbsp;
+                    <form method="post" action="{% url 'pedido_entregada' pedido.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit">📦 Marcar Entregada</button>
+                    </form>
+                    {% endif %}
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5">No hay pedidos en preparación en este momento.</td>
+                <td colspan="5">No hay pedidos activos en este momento.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
     <script>
-        // Refresca la página para que la cocina vea los pedidos nuevos confirmados en tiempo real.
-        setTimeout(function() {
-            window.location.reload();
-        }, 10000);
+        setTimeout(function() { window.location.reload(); }, 10000);
     </script>
 </body>
 </html>
