@@ -1,5 +1,6 @@
 import csv
-from django.http import HttpResponse
+import json
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 from django.views.generic import ListView
@@ -10,6 +11,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.cache import cache
+from django.utils import timezone
+from datetime import timedelta
 from products.models import Producto, Categoria, MovimientoInventario
 from .models import Pedido, PedidoProducto, Transaccion
 from .forms import PedidoForm, PedidoProductoForm
@@ -263,6 +266,58 @@ class PedidoConfirmarView(LoginRequiredMixin, View):
         pedido.save()
         messages.success(request, f'Orden #{pedido.pk} confirmada y enviada a cocina.')
         return redirect('pedido_detail', pk=pk)
+
+
+# ── RF-08: Vista de Cocina en Tiempo Real ────────────────────────────────────
+
+class PedidosActivosAPIView(LoginRequiredMixin, View):
+    """API endpoint que retorna pedidos activos en JSON para actualizaci\u00f3n en tiempo real.
+    
+    Responde con un JSON que contiene:
+    - pedidos: lista de pedidos activos con sus detalles
+    - timestamp: marca de tiempo para comparaci\u00f3n de actualizaci\u00f3n
+    """
+    
+    def get(self, request):
+        # Pedidos en preparaci\u00f3n o listos
+        pedidos = Pedido.objects.filter(
+            estado__in=['en_preparacion', 'listo']
+        ).order_by('fecha_creacion')
+        
+        # \u00d9ltima actualizaci\u00f3n para detectar cambios (hace 5 segundos)
+        last_update = request.GET.get('last_update')
+        pedidos_json = []
+        
+        for pedido in pedidos:
+            items = []
+            for item in pedido.items.select_related('producto'):
+                items.append({
+                    'id': item.id,
+                    'producto': item.producto.nombre,
+                    'cantidad': item.cantidad,
+                })
+            
+            # Detectar si es orden nueva (creada hace menos de 30 segundos)
+            ahora = timezone.now()
+            segundos_transcurridos = (ahora - pedido.fecha_creacion).total_seconds()
+            es_nuevo = segundos_transcurridos < 30
+            
+            pedidos_json.append({
+                'id': pedido.id,
+                'mesa_o_online': pedido.mesa_o_online,
+                'estado': pedido.estado,
+                'fecha_creacion': pedido.fecha_creacion.isoformat(),
+                'hora_formateada': pedido.fecha_creacion.strftime('%H:%M'),
+                'items': items,
+                'es_nuevo': es_nuevo,
+                'total_items': len(items),
+            })
+        
+        return JsonResponse({
+            'pedidos': pedidos_json,
+            'timestamp': timezone.now().isoformat(),
+            'total': len(pedidos_json),
+        })
 
 
 class CocinaDashboardView(LoginRequiredMixin, ListView):
