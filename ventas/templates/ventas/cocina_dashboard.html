@@ -612,6 +612,26 @@
 
         // ── EVENTOS ──
 
+        // Confirmación antes de marcar como entregada
+        document.addEventListener('submit', function(e) {
+            const submitButton = e.submitter;
+            if (submitButton && submitButton.classList.contains('btn-warning')) {
+                // Obtener el ID del pedido desde la URL del formulario
+                const formAction = e.target.action;
+                const pedidoId = formAction.match(/\/pedidos\/(\d+)\//)?.[1];
+
+                const mensaje = pedidoId
+                    ? `¿Estás seguro de marcar el pedido #${pedidoId} como entregado?`
+                    : '¿Estás seguro de marcar este pedido como entregado?';
+
+                const confirmed = confirm(mensaje);
+                if (!confirmed) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
+
         // Iniciar cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', iniciarActualizacion);
 
