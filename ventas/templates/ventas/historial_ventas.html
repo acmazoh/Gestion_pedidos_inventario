@@ -3,12 +3,16 @@
 <head>
     <title>Historial de Ventas</title>
     <style>
-        body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; }
+        body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; background:#FFFFFF; color:#000000; }
         nav { margin-bottom: 16px; }
         .logout-btn { float: right; }
+        nav a { color:#2196F3; font-weight:bold; text-decoration:none; }
+        nav a:hover { color:#1565C0; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #f0f0f0; }
+        th, td { border: 1px solid #d0d7de; padding: 8px; text-align: left; }
+        th { background: #e8f1fd; color:#1565C0; }
+        button[type="submit"] { background:#2196F3; color:#fff; border:none; border-radius:4px; padding:6px 14px; cursor:pointer; }
+        button[type="submit"]:hover { background:#1565C0; }
     </style>
 </head>
 <body>
@@ -17,7 +21,7 @@
         <a href="{% url 'cocina_dashboard' %}">Cocina</a>
         <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
             {% csrf_token %}
-            <button type="submit" style="background:none;border:none;color:#c00;cursor:pointer;padding:0;">Cerrar Sesión ({{ request.user.username }})</button>
+            <button type="submit" style="background:none;border:none;color:#9C27B0;cursor:pointer;padding:0;font-weight:bold;">Cerrar Sesión ({{ request.user.username }})</button>
         </form>
     </nav>
 
@@ -29,15 +33,15 @@
         <label>Hasta: <input type="date" name="hasta" value="{{ hasta }}"></label>
         &nbsp;
         <button type="submit">Filtrar</button>
-        {% if desde or hasta %}<a href="{% url 'historial_ventas' %}">Limpiar</a>{% endif %}
+        {% if desde or hasta %}<a href="{% url 'historial_ventas' %}" style="color:#9C27B0; font-weight:bold;">Limpiar</a>{% endif %}
     </form>
 
-    <a href="{% url 'historial_ventas_csv' %}{% if desde or hasta %}?desde={{ desde }}&hasta={{ hasta }}{% endif %}">
+    <a href="{% url 'historial_ventas_csv' %}{% if desde or hasta %}?desde={{ desde }}&hasta={{ hasta }}{% endif %}" style="color:#9C27B0; font-weight:bold;">
         ⬇ Exportar CSV
     </a>
 
     {% if transacciones %}
-    <p><strong>Total del período: ${{ total_periodo }}</strong></p>
+    <p><strong style="color:#4CAF50;">Total del período: ${{ total_periodo }}</strong></p>
     <table>
         <thead>
             <tr>
@@ -68,11 +72,11 @@
     {% if is_paginated %}
     <div>
         {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}&desde={{ desde }}&hasta={{ hasta }}">Anterior</a>
+            <a href="?page={{ page_obj.previous_page_number }}&desde={{ desde }}&hasta={{ hasta }}" style="color:#2196F3; font-weight:bold;">Anterior</a>
         {% endif %}
         Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
         {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}&desde={{ desde }}&hasta={{ hasta }}">Siguiente</a>
+            <a href="?page={{ page_obj.next_page_number }}&desde={{ desde }}&hasta={{ hasta }}" style="color:#2196F3; font-weight:bold;">Siguiente</a>
         {% endif %}
     </div>
     {% endif %}

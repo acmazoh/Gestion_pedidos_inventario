@@ -1,53 +1,73 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>Gestión de Ingredientes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'ventas/restin-theme.css' %}">
 </head>
 <body>
-    <h1>Ingredientes</h1>
-    <a href="{% url 'ingrediente_create' %}">Agregar Ingrediente</a>
-    &nbsp;|&nbsp;
-    <a href="{% url 'movimiento_list' %}">Ver historial de movimientos</a>
-    &nbsp;|&nbsp;
-    <a href="{% url 'producto_list' %}">Ir a Productos</a>
+    <div class="page-shell">
+        <div class="page-container stack">
+            <nav class="top-nav">
+                <div class="nav-links">
+                    <a class="nav-link is-active" href="{% url 'ingrediente_list' %}">Ingredientes</a>
+                    <a class="nav-link" href="{% url 'movimiento_list' %}">Movimientos</a>
+                    <a class="nav-link" href="{% url 'producto_list' %}">Productos</a>
+                </div>
+                <a href="{% url 'ingrediente_create' %}" class="btn btn-primary">Agregar ingrediente</a>
+            </nav>
 
-    {% if ingredientes %}
-    <table border="1" cellpadding="6" cellspacing="0">
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th>Unidad</th>
-                <th>Stock actual</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for ingrediente in ingredientes %}
-            <tr {% if ingrediente.stock <= stock_minimo %}style="background-color: #ffe0e0;"{% endif %}>
-                <td>{{ ingrediente.nombre }}</td>
-                <td>{{ ingrediente.get_unidad_medida_display }}</td>
-                <td>{{ ingrediente.stock }}</td>
-                <td>
-                    {% if ingrediente.stock == 0 %}
-                        ⛔ Sin stock
-                    {% elif ingrediente.stock <= stock_minimo %}
-                        ⚠️ Stock bajo
-                    {% else %}
-                        ✅ OK
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{% url 'ingrediente_update' ingrediente.pk %}">Editar</a>
-                    &nbsp;|&nbsp;
-                    <a href="{% url 'ingrediente_delete' ingrediente.pk %}">Eliminar</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>No hay ingredientes registrados.</p>
-    {% endif %}
+            <header class="page-header">
+                <h1 class="page-title">Inventario de ingredientes</h1>
+                <p class="page-subtitle">Monitorea unidades disponibles, detecta stock bajo y edita ingredientes del sistema.</p>
+            </header>
+
+            <section class="page-card">
+                {% if ingredientes %}
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Unidad</th>
+                                <th>Stock actual</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ingrediente in ingredientes %}
+                            <tr class="{% if ingrediente.stock <= stock_minimo %}row-highlight{% endif %}">
+                                <td>{{ ingrediente.nombre }}</td>
+                                <td>{{ ingrediente.get_unidad_medida_display }}</td>
+                                <td>{{ ingrediente.stock }}</td>
+                                <td>
+                                    {% if ingrediente.stock == 0 %}
+                                        <span class="status-pill status-danger">Sin stock</span>
+                                    {% elif ingrediente.stock <= stock_minimo %}
+                                        <span class="status-pill status-highlight">Stock bajo</span>
+                                    {% else %}
+                                        <span class="status-pill status-completed">OK</span>
+                                    {% endif %}
+                                </td>
+                                <td class="actions-row">
+                                    <a href="{% url 'ingrediente_update' ingrediente.pk %}" class="btn btn-ghost">Editar</a>
+                                    <a href="{% url 'ingrediente_delete' ingrediente.pk %}" class="btn btn-danger">Eliminar</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <h3>Sin ingredientes</h3>
+                    <p>No hay ingredientes registrados.</p>
+                </div>
+                {% endif %}
+            </section>
+        </div>
+    </div>
 </body>
 </html>

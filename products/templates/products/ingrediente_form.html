@@ -1,15 +1,30 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>{% if form.instance.pk %}Editar{% else %}Agregar{% endif %} Ingrediente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'ventas/restin-theme.css' %}">
 </head>
 <body>
-    <h1>{% if form.instance.pk %}Editar Ingrediente{% else %}Agregar Ingrediente{% endif %}</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar</button>
-    </form>
-    <a href="{% url 'ingrediente_list' %}">Volver</a>
+    <div class="page-shell">
+        <div class="page-container">
+            <header class="page-header">
+                <h1 class="page-title">{% if form.instance.pk %}Editar ingrediente{% else %}Agregar ingrediente{% endif %}</h1>
+                <p class="page-subtitle">Actualiza nombre, unidad y stock inicial dentro del inventario del restaurante.</p>
+            </header>
+
+            <section class="page-card">
+                <form method="post" class="stack">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <div class="actions-row">
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                        <a href="{% url 'ingrediente_list' %}" class="btn btn-ghost">Volver</a>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
 </body>
 </html>

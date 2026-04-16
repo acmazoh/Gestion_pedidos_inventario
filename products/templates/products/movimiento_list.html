@@ -1,57 +1,85 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>Historial de Movimientos de Inventario</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'ventas/restin-theme.css' %}">
 </head>
 <body>
-    <h1>Historial de Movimientos de Inventario</h1>
-    <a href="{% url 'ingrediente_list' %}">Volver a Ingredientes</a>
+    <div class="page-shell">
+        <div class="page-container stack">
+            <nav class="top-nav">
+                <div class="nav-links">
+                    <a class="nav-link" href="{% url 'ingrediente_list' %}">Ingredientes</a>
+                    <a class="nav-link is-active" href="{% url 'movimiento_list' %}">Movimientos</a>
+                    <a class="nav-link" href="{% url 'producto_list' %}">Productos</a>
+                </div>
+            </nav>
 
-    {% if movimientos %}
-    <table border="1" cellpadding="6" cellspacing="0">
-        <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>Ingrediente</th>
-                <th>Tipo</th>
-                <th>Cantidad</th>
-                <th>Stock resultante</th>
-                <th>Pedido</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for mov in movimientos %}
-            <tr {% if mov.stock_resultante <= 5 %}style="background-color: #ffe0e0;"{% endif %}>
-                <td>{{ mov.fecha|date:"d/m/Y H:i" }}</td>
-                <td>{{ mov.ingrediente.nombre }}</td>
-                <td>{{ mov.get_tipo_display }}</td>
-                <td {% if mov.cantidad < 0 %}style="color:red;"{% else %}style="color:green;"{% endif %}>
-                    {{ mov.cantidad }}
-                </td>
-                <td>
-                    {{ mov.stock_resultante }}
-                    {% if mov.stock_resultante == 0 %}⛔{% elif mov.stock_resultante <= 5 %}⚠️{% endif %}
-                </td>
-                <td>{% if mov.pedido_id %}#{{ mov.pedido_id }}{% else %}—{% endif %}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            <header class="page-header">
+                <h1 class="page-title">Historial de movimientos</h1>
+                <p class="page-subtitle">Sigue entradas y salidas del inventario con estados visibles y stock resultante.</p>
+            </header>
 
-    {% if is_paginated %}
-    <div>
-        {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}">Anterior</a>
-        {% endif %}
-        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}">Siguiente</a>
-        {% endif %}
+            <section class="page-card">
+                {% if movimientos %}
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Ingrediente</th>
+                                <th>Tipo</th>
+                                <th>Cantidad</th>
+                                <th>Stock resultante</th>
+                                <th>Pedido</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mov in movimientos %}
+                            <tr class="{% if mov.stock_resultante <= 5 %}row-highlight{% endif %}">
+                                <td>{{ mov.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>{{ mov.ingrediente.nombre }}</td>
+                                <td><span class="status-pill {% if mov.cantidad < 0 %}status-progress{% else %}status-completed{% endif %}">{{ mov.get_tipo_display }}</span></td>
+                                <td>
+                                    <span class="status-pill {% if mov.cantidad < 0 %}status-danger{% else %}status-completed{% endif %}">{{ mov.cantidad }}</span>
+                                </td>
+                                <td>
+                                    {{ mov.stock_resultante }}
+                                    {% if mov.stock_resultante == 0 %}
+                                        <span class="status-pill status-danger">Crítico</span>
+                                    {% elif mov.stock_resultante <= 5 %}
+                                        <span class="status-pill status-highlight">Bajo</span>
+                                    {% endif %}
+                                </td>
+                                <td>{% if mov.pedido_id %}#{{ mov.pedido_id }}{% else %}—{% endif %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if is_paginated %}
+                <div class="actions-row spacer-top">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-ghost">Anterior</a>
+                    {% endif %}
+                    <span class="muted">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="btn btn-ghost">Siguiente</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="empty-state">
+                    <h3>Sin movimientos</h3>
+                    <p>No hay movimientos registrados todavía.</p>
+                </div>
+                {% endif %}
+            </section>
+        </div>
     </div>
-    {% endif %}
-
-    {% else %}
-    <p>No hay movimientos registrados todavía.</p>
-    {% endif %}
 </body>
 </html>

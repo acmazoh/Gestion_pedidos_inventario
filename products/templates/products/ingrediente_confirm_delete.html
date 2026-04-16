@@ -1,16 +1,27 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>Eliminar Ingrediente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'ventas/restin-theme.css' %}">
 </head>
 <body>
-    <h1>Eliminar Ingrediente</h1>
-    <p>¿Estás seguro de que deseas eliminar <strong>{{ object.nombre }}</strong>?</p>
-    <p>Stock actual: {{ object.stock }}</p>
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit">Sí, eliminar</button>
-    </form>
-    <a href="{% url 'ingrediente_list' %}">Cancelar</a>
+    <div class="page-shell">
+        <div class="page-container">
+            <section class="page-card stack">
+                <h1 class="page-title">Eliminar ingrediente</h1>
+                <div class="alert alert-error">
+                    ¿Estás seguro de que deseas eliminar <strong>{{ object.nombre }}</strong>?
+                </div>
+                <p><strong>Stock actual:</strong> {{ object.stock }}</p>
+                <form method="post" class="actions-row">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+                    <a href="{% url 'ingrediente_list' %}" class="btn btn-ghost">Cancelar</a>
+                </form>
+            </section>
+        </div>
+    </div>
 </body>
 </html>

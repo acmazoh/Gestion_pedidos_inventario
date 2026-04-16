@@ -4,14 +4,16 @@
     <meta charset="UTF-8">
     <title>Crear Nuevo Pedido</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 0 16px; }
+        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 0 16px; background:#FFFFFF; color:#000000; }
         nav { margin-bottom: 16px; }
-        .msg-success { background:#d4edda; border:1px solid #28a745; padding:8px 12px; border-radius:4px; margin-bottom:12px; }
-        .msg-error   { background:#ffe6e6; border:1px solid #cc0000; padding:8px 12px; border-radius:4px; margin-bottom:12px; }
+        .msg-success { background:#e8f5e9; border:1px solid #4CAF50; padding:8px 12px; border-radius:4px; margin-bottom:12px; }
+        .msg-error   { background:#fce4ec; border:1px solid #9C27B0; padding:8px 12px; border-radius:4px; margin-bottom:12px; }
         .logout-btn { float:right; }
-        input[type="text"], select { width:100%; padding:6px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px; }
-        button[type="submit"] { margin-top:12px; padding:8px 20px; background:#1a73e8; color:#fff; border:none; border-radius:4px; cursor:pointer; }
-        button[type="submit"]:hover { background:#1558b0; }
+        nav a { color:#2196F3; font-weight:bold; text-decoration:none; }
+        nav a:hover { color:#1565C0; }
+        input[type="text"], select { width:100%; padding:6px; box-sizing:border-box; border:1px solid #2196F3; border-radius:4px; }
+        button[type="submit"] { margin-top:12px; padding:8px 20px; background:#2196F3; color:#fff; border:none; border-radius:4px; cursor:pointer; }
+        button[type="submit"]:hover { background:#1565C0; }
     </style>
 </head>
 <body>
@@ -20,7 +22,7 @@
         <a href="{% url 'venta_list' %}">Productos</a>
         <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
             {% csrf_token %}
-            <button type="submit" style="background:none;border:none;color:#c00;cursor:pointer;padding:0;">Cerrar Sesión ({{ request.user.username }})</button>
+            <button type="submit" style="background:none;border:none;color:#9C27B0;cursor:pointer;padding:0;font-weight:bold;">Cerrar Sesión ({{ request.user.username }})</button>
         </form>
     </nav>
 

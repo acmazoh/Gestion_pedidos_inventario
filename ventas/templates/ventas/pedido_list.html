@@ -4,14 +4,20 @@
     <meta charset="UTF-8">
     <title>Lista de Pedidos</title>
     <style>
-        body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; }
+        body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; background: #FFFFFF; color: #000000; }
         nav { margin-bottom: 16px; }
         .logout-btn { float:right; }
+        nav a { color: #2196F3; font-weight: bold; text-decoration: none; }
+        nav a:hover { color: #1565C0; }
         table { width:100%; border-collapse:collapse; }
-        th, td { border:1px solid #ddd; padding:8px; text-align:left; }
-        th { background:#f0f0f0; }
-        .msg-success { background:#d4edda; border:1px solid #28a745; padding:8px 12px; border-radius:4px; margin-bottom:12px; }
-        .msg-error   { background:#ffe6e6; border:1px solid #cc0000; padding:8px 12px; border-radius:4px; margin-bottom:12px; }
+        th, td { border:1px solid #d0d7de; padding:8px; text-align:left; }
+        th { background:#e8f1fd; color: #1565C0; }
+        .msg-success { background:#e8f5e9; border:1px solid #4CAF50; padding:8px 12px; border-radius:4px; margin-bottom:12px; }
+        .msg-error   { background:#fce4ec; border:1px solid #9C27B0; padding:8px 12px; border-radius:4px; margin-bottom:12px; }
+        .estado { display:inline-block; padding:4px 8px; border-radius:12px; color:#fff; font-size:12px; font-weight:bold; }
+        .estado-pendiente { background:#9C27B0; }
+        .estado-proceso { background:#1565C0; }
+        .estado-completo { background:#4CAF50; }
     </style>
 </head>
 <body>
@@ -21,7 +27,7 @@
         <a href="{% url 'cocina_dashboard' %}">Cocina</a>
         <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
             {% csrf_token %}
-            <button type="submit" style="background:none;border:none;color:#c00;cursor:pointer;padding:0;">Cerrar Sesión ({{ request.user.username }})</button>
+            <button type="submit" style="background:none;border:none;color:#9C27B0;cursor:pointer;padding:0;font-weight:bold;">Cerrar Sesión ({{ request.user.username }})</button>
         </form>
     </nav>
 
@@ -32,30 +38,34 @@
     {% endfor %}
 
     <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Mesa / Cliente</th>
-                <th>Estado</th>
-                <th>Creado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for pedido in pedidos %}
-            <tr>
-                <td>{{ pedido.id }}</td>
-                <td>{{ pedido.mesa_o_online }}</td>
-                <td>{{ pedido.get_estado_display }}</td>
-                <td>{{ pedido.fecha_creacion|date:"d/m/Y H:i" }}</td>
-                <td><a href="{% url 'pedido_detail' pedido.id %}">Ver / Editar</a></td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="5">No hay pedidos creados aún.</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Mesa / Cliente</th>
+                                <th>Estado</th>
+                                <th>Creado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for pedido in pedidos %}
+                            <tr>
+                                <td>{{ pedido.id }}</td>
+                                <td>{{ pedido.mesa_o_online }}</td>
+                                <td>
+                                    <span class="estado {% if pedido.estado == 'en_preparacion' %}estado-proceso{% elif pedido.estado == 'listo' or pedido.estado == 'entregada' or pedido.estado == 'pagado' %}estado-completo{% else %}estado-pendiente{% endif %}">
+                                        {{ pedido.get_estado_display }}
+                                    </span>
+                                </td>
+                                <td>{{ pedido.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                                <td><a href="{% url 'pedido_detail' pedido.id %}" style="color:#2196F3; font-weight:bold;">Ver / Editar</a></td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5">No hay pedidos creados aún.</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
 </body>
 </html>

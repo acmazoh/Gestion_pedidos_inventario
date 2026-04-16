@@ -4,24 +4,32 @@
     <meta charset="UTF-8">
     <title>Detalle del Pedido #{{ pedido.id }}</title>
     <style>
-        body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; }
+        body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; background:#FFFFFF; color:#000000; }
         nav { margin-bottom: 16px; }
         .logout-btn { float: right; }
+        nav a { color:#2196F3; font-weight:bold; text-decoration:none; }
+        nav a:hover { color:#1565C0; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #f0f0f0; }
-        .msg-success { background: #d4edda; border: 1px solid #28a745; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; }
-        .msg-error   { background: #ffe6e6; border: 1px solid #cc0000; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; }
-        .qty-btn { padding: 2px 10px; font-size: 16px; cursor: pointer; }
-        .confirmed-notice { background: #e8f0fe; border: 1px solid #1a73e8; padding: 10px 14px; border-radius: 4px; margin: 12px 0; }
-        #search-input { padding: 6px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 8px; }
-        select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
-        input[type="number"] { width: 60px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
-        button[type="submit"] { padding: 6px 14px; background: #1a73e8; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
-        button[type="submit"]:hover { background: #1558b0; }
-        #confirm-btn { padding: 10px 24px; background: #28a745; color: #fff; border: none; border-radius: 4px; font-size: 15px; cursor: pointer; }
-        #confirm-btn:hover { background: #1e7e34; }
-        #total-display { font-size: 1.2em; font-weight: bold; margin: 8px 0; }
+        th, td { border: 1px solid #d0d7de; padding: 8px; text-align: left; }
+        th { background: #e8f1fd; color:#1565C0; }
+        .msg-success { background: #e8f5e9; border: 1px solid #4CAF50; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; }
+        .msg-error   { background: #fce4ec; border: 1px solid #9C27B0; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; }
+        .qty-btn { padding: 4px 10px; font-size: 16px; cursor: pointer; border:none; border-radius:4px; color:#fff; }
+        .qty-btn.plus { background:#2196F3; }
+        .qty-btn.plus:hover { background:#1565C0; }
+        .qty-btn.minus { background:#1565C0; }
+        .qty-btn.minus:hover { background:#0d47a1; }
+        .qty-btn.delete { background:#9C27B0; }
+        .qty-btn.delete:hover { background:#7b1fa2; }
+        .confirmed-notice { background: #e8f1fd; border: 1px solid #1565C0; padding: 10px 14px; border-radius: 4px; margin: 12px 0; }
+        #search-input { padding: 6px; width: 100%; box-sizing: border-box; border: 1px solid #2196F3; border-radius: 4px; margin-bottom: 8px; }
+        select { width: 100%; padding: 6px; border: 1px solid #2196F3; border-radius: 4px; }
+        input[type="number"] { width: 60px; padding: 6px; border: 1px solid #2196F3; border-radius: 4px; }
+        button[type="submit"] { padding: 6px 14px; background: #2196F3; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        button[type="submit"]:hover { background: #1565C0; }
+        #confirm-btn { padding: 10px 24px; background: #4CAF50; color: #fff; border: none; border-radius: 4px; font-size: 15px; cursor: pointer; }
+        #confirm-btn:hover { background: #3d8b40; }
+        #total-display { font-size: 1.2em; font-weight: bold; margin: 8px 0; color:#1565C0; }
     </style>
 </head>
 <body>
@@ -30,40 +38,39 @@
         <a href="{% url 'venta_list' %}">Productos</a>
         <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
             {% csrf_token %}
-            <button type="submit" style="background:none;border:none;color:#c00;cursor:pointer;padding:0;">Cerrar Sesión ({{ request.user.username }})</button>
+            <button type="submit" style="background:none;border:none;color:#9C27B0;cursor:pointer;padding:0;font-weight:bold;">Cerrar Sesión ({{ request.user.username }})</button>
         </form>
     </nav>
 
     <h1>Pedido #{{ pedido.id }} — {{ pedido.mesa_o_online }}</h1>
 
-    {% for message in messages %}
-    <div class="{% if message.tags == 'error' %}msg-error{% else %}msg-success{% endif %}">{{ message }}</div>
-    {% endfor %}
-
-    {% if confirm_errors %}
-    <div class="msg-error">
-        <strong>No se puede confirmar: stock insuficiente</strong>
-        <ul style="margin:6px 0 0 0;">
-            {% for err in confirm_errors %}
-            <li>
-                <strong>{{ err.ingrediente.nombre }}</strong>
-                (productos: {{ err.productos|join:", " }}):
-                necesita {{ err.required }}, disponible {{ err.available }}
-                — <em>faltan {{ err.missing }}</em>
-            </li>
+            {% for message in messages %}
+            <div class="{% if message.tags == 'error' %}msg-error{% else %}msg-success{% endif %}">{{ message }}</div>
             {% endfor %}
-        </ul>
-        <p style="margin:6px 0 0 0;">Ajuste el pedido o actualice el inventario antes de confirmar.</p>
-    </div>
-    {% endif %}
 
-    {% if pedido.estado != 'pendiente' %}
-    <div class="confirmed-notice">
-        Estado: <strong>{{ pedido.get_estado_display }}</strong> — la orden ya no puede modificarse.
-    </div>
-    {% endif %}
+            {% if confirm_errors %}
+            <div class="msg-error">
+                <strong>No se puede confirmar: stock insuficiente</strong>
+                <ul style="margin:6px 0 0 18px;">
+                    {% for err in confirm_errors %}
+                    <li>
+                        <strong>{{ err.ingrediente.nombre }}</strong>
+                        (productos: {{ err.productos|join:", " }}):
+                        necesita {{ err.required }}, disponible {{ err.available }}
+                        — <em>faltan {{ err.missing }}</em>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <p>Ajuste el pedido o actualice el inventario antes de confirmar.</p>
+            </div>
+            {% endif %}
 
-    <!-- Tabla de productos -->
+            {% if pedido.estado != 'pendiente' %}
+            <div class="confirmed-notice">
+                Estado: <strong>{{ pedido.get_estado_display }}</strong> — la orden ya no puede modificarse.
+            </div>
+            {% endif %}
+
     <h2>Productos en la orden</h2>
     <table id="items-table">
         <thead>
@@ -86,15 +93,15 @@
                 <td>
                     <form method="post" action="{% url 'pedido_item_increment' pedido.id item.id %}" style="display:inline;">
                         {% csrf_token %}
-                        <button type="submit" name="action" value="increment" class="qty-btn" title="Aumentar">+</button>
+                        <button type="submit" name="action" value="increment" class="qty-btn plus" title="Aumentar">+</button>
                     </form>
                     <form method="post" action="{% url 'pedido_item_decrement' pedido.id item.id %}" style="display:inline;">
                         {% csrf_token %}
-                        <button type="submit" name="action" value="decrement" class="qty-btn" title="Disminuir">−</button>
+                        <button type="submit" name="action" value="decrement" class="qty-btn minus" title="Disminuir">−</button>
                     </form>
                     <form method="post" action="{% url 'pedido_item_delete' pedido.id item.id %}" style="display:inline;">
                         {% csrf_token %}
-                        <button type="submit" class="qty-btn" style="color:#c00;" title="Eliminar producto"
+                        <button type="submit" class="qty-btn delete" title="Eliminar producto"
                             onclick="return confirm('¿Eliminar {{ item.producto.nombre }} de la orden?')">🗑</button>
                     </form>
                 </td>
@@ -102,7 +109,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="{% if pedido.estado == 'pendiente' %}5{% else %}4{% endif %}" style="color:#888;">
+                <td colspan="{% if pedido.estado == 'pendiente' %}5{% else %}4{% endif %}" style="color:#666;">
                     No hay productos en esta orden todavía.
                 </td>
             </tr>
@@ -114,30 +121,28 @@
         Total: $<span id="total-value">{{ total }}</span>
     </div>
 
-    <!-- Confirmar orden -->
-    {% if pedido.estado == 'pendiente' %}
-    <h2>Confirmar y enviar a cocina</h2>
-    {% if items %}
-    <p>Resumen: <strong>{{ items|length }} producto(s)</strong> — Total: $<strong>{{ total }}</strong></p>
-    <form method="post" action="{% url 'pedido_confirm' pedido.id %}"
+            {% if pedido.estado == 'pendiente' %}
+            <h2>Confirmar y enviar a cocina</h2>
+                {% if items %}
+                <p>Resumen: <strong>{{ items|length }} producto(s)</strong> — Total: $<strong>{{ total }}</strong></p>
+                <form method="post" action="{% url 'pedido_confirm' pedido.id %}"
           onsubmit="return confirm('¿Confirmar la orden #{{ pedido.id }} y enviarla a cocina?\n\nEsta acción descontará el inventario y no se podrá deshacer.')">
-        {% csrf_token %}
-        <button type="submit" id="confirm-btn">✔ Confirmar Orden y Enviar a Cocina</button>
-    </form>
-    {% else %}
-    <p style="color:#888;">Agrega al menos un producto para poder confirmar la orden.</p>
-    {% endif %}
+                    {% csrf_token %}
+                    <button type="submit" id="confirm-btn">✔ Confirmar Orden y Enviar a Cocina</button>
+                </form>
+                {% else %}
+                <p style="color:#666;">Agrega al menos un producto para poder confirmar la orden.</p>
+                {% endif %}
 
-    <!-- Agregar producto -->
-    <h2>Agregar producto</h2>
-    <label for="search-input">Buscar producto:</label>
-    <input type="text" id="search-input" placeholder="Escriba para filtrar..." autocomplete="off">
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Agregar</button>
-    </form>
-    {% endif %}
+            <h2>Agregar producto</h2>
+            <label for="search-input">Buscar producto:</label>
+            <input type="text" id="search-input" placeholder="Escriba para filtrar..." autocomplete="off">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit">Agregar</button>
+            </form>
+            {% endif %}
 
     <script>
     // Búsqueda/filtro en el select de productos

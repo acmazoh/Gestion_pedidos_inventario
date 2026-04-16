@@ -4,25 +4,27 @@
     <meta charset="UTF-8">
     <title>Iniciar Sesión — Restin POS</title>
     <style>
-        body { font-family: sans-serif; max-width: 400px; margin: 80px auto; padding: 0 16px; }
-        h1 { margin-bottom: 24px; }
-        label { display: block; margin-top: 12px; font-weight: bold; }
+        body { font-family: sans-serif; max-width: 400px; margin: 80px auto; padding: 0 16px; background: #ffffff; color: #000000; }
+        h1 { margin-bottom: 24px; color: #000000; }
+        h2 { color: #9C27B0; margin-top: 0; }
+        label { display: block; margin-top: 12px; font-weight: bold; color: #000000; }
         input[type="text"], input[type="password"] {
             width: 100%; padding: 8px; box-sizing: border-box;
-            border: 1px solid #ccc; border-radius: 4px; margin-top: 4px;
+            border: 1px solid #2196F3; border-radius: 4px; margin-top: 4px;
+            background: #FFFFFF;
         }
         button[type="submit"] {
             margin-top: 20px; width: 100%; padding: 10px;
-            background: #1a73e8; color: #fff; border: none;
+            background: #2196F3; color: #fff; border: none;
             border-radius: 4px; font-size: 16px; cursor: pointer;
         }
-        button[type="submit"]:hover { background: #1558b0; }
+        button[type="submit"]:hover { background: #1565C0; }
         .error-box {
-            background: #ffe6e6; border: 1px solid #cc0000;
+            background: #fce4ec; border: 1px solid #9C27B0;
             padding: 10px 14px; border-radius: 4px; margin-bottom: 16px;
         }
         .blocked-box {
-            background: #fff3cd; border: 1px solid #ffa000;
+            background: #e8f1fd; border: 1px solid #1565C0;
             padding: 10px 14px; border-radius: 4px; margin-bottom: 16px;
         }
     </style>
@@ -31,34 +33,34 @@
     <h1>🍽️ Restin POS</h1>
     <h2>Iniciar Sesión</h2>
 
-    {% if rate_limited %}
-    <div class="blocked-box">
-        <strong>Cuenta bloqueada temporalmente.</strong><br>
-        Has superado el límite de 5 intentos fallidos. Por favor espera 15 minutos antes de volver a intentarlo.
-    </div>
-    {% else %}
+            {% if rate_limited %}
+            <div class="blocked-box">
+                <strong>Cuenta bloqueada temporalmente.</strong><br>
+                Has superado el límite de 5 intentos fallidos. Por favor espera 15 minutos antes de volver a intentarlo.
+            </div>
+            {% else %}
 
-    {% if form.errors %}
-    <div class="error-box">
-        {% for field in form %}
-            {% for error in field.errors %}
-                <p style="margin:0">{{ error }}</p>
-            {% endfor %}
-        {% endfor %}
-        {% for error in form.non_field_errors %}
-            <p style="margin:0">{{ error }}</p>
-        {% endfor %}
-    </div>
-    {% endif %}
+            {% if form.errors %}
+            <div class="error-box">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <p style="margin:0">{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <p style="margin:0">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
 
-    <form method="post">
-        {% csrf_token %}
-        <label for="id_username">Usuario</label>
-        {{ form.username }}
-        <label for="id_password">Contraseña</label>
-        {{ form.password }}
-        <button type="submit">Ingresar</button>
-    </form>
-    {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <label for="id_username">Usuario</label>
+                {{ form.username }}
+                <label for="id_password">Contraseña</label>
+                {{ form.password }}
+                <button type="submit">Ingresar</button>
+            </form>
+            {% endif %}
 </body>
 </html>

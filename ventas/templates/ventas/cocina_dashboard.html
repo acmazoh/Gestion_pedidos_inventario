@@ -13,7 +13,8 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: #fafafa;
+            background: #ffffff;
+            color: #000000;
             min-height: 100vh;
             padding: 20px;
         }
@@ -25,7 +26,7 @@
 
         /* ── HEADER ── */
         header {
-            background: white;
+            background: #ffffff;
             padding: 18px 24px;
             border-radius: 6px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -39,7 +40,7 @@
 
         header h1 {
             font-size: 22px;
-            color: #1a1a1a;
+            color: #000000;
             font-weight: 600;
             flex: 1;
             letter-spacing: -0.5px;
@@ -63,7 +64,7 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #10b981;
+            background: #4CAF50;
             animation: pulse 2s infinite;
         }
 
@@ -73,8 +74,8 @@
         }
 
         .logout-btn {
-            background: #ef4444;
-            color: white;
+            background: #9C27B0;
+            color: #fff;
             border: none;
             padding: 8px 16px;
             border-radius: 4px;
@@ -85,12 +86,12 @@
         }
 
         .logout-btn:hover {
-            background: #dc2626;
+            background: #7b1fa2;
         }
 
         /* ── NAVIGATION ── */
         nav {
-            background: white;
+            background: #ffffff;
             padding: 12px 24px;
             border-radius: 6px;
             margin-bottom: 24px;
@@ -101,14 +102,14 @@
         }
 
         nav a {
-            color: #6366f1;
+            color: #2196F3;
             text-decoration: none;
             font-weight: 500;
             transition: color 0.2s;
         }
 
         nav a:hover {
-            color: #4f46e5;
+            color: #1565C0;
         }
 
         /* ── PEDIDOS GRID ── */
@@ -130,7 +131,7 @@
             display: flex;
             flex-direction: column;
             height: 280px;
-            border-top: 3px solid #6366f1;
+            border-top: 3px solid #9C27B0;
         }
 
         .pedido-card:hover {
@@ -140,15 +141,15 @@
 
         /* Estados de colores */
         .pedido-card.en_preparacion {
-            border-top-color: #8b5cf6;
+            border-top-color: #1565C0;
         }
 
         .pedido-card.listo {
-            border-top-color: #3b82f6;
+            border-top-color: #4CAF50;
         }
 
         .pedido-card.nuevo {
-            border-top-color: #10b981;
+            border-top-color: #9C27B0;
             animation: slideIn 0.4s ease-out;
         }
 
@@ -168,13 +169,43 @@
             position: absolute;
             top: 8px;
             right: 8px;
-            background: #10b981;
+            background: #9C27B0;
             color: white;
             padding: 3px 8px;
             border-radius: 3px;
             font-size: 10px;
             font-weight: 700;
             letter-spacing: 0.5px;
+        }
+
+        .pedido-card.reciente-destacado {
+            outline: 2px solid #9C27B0;
+            box-shadow: 0 0 0 4px rgba(156, 39, 176, 0.16), 0 8px 16px rgba(0, 0, 0, 0.12);
+            animation: recientePulse 0.9s ease-in-out infinite alternate;
+        }
+
+        @keyframes recientePulse {
+            from {
+                transform: translateY(0);
+                box-shadow: 0 0 0 4px rgba(156, 39, 176, 0.12), 0 8px 16px rgba(0, 0, 0, 0.1);
+            }
+            to {
+                transform: translateY(-2px);
+                box-shadow: 0 0 0 6px rgba(156, 39, 176, 0.22), 0 12px 20px rgba(0, 0, 0, 0.14);
+            }
+        }
+
+        .badge-reciente {
+            position: absolute;
+            left: 8px;
+            top: 8px;
+            background: #9C27B0;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 3px;
+            padding: 3px 8px;
+            letter-spacing: 0.4px;
         }
 
         /* ── ENCABEZADO ── */
@@ -253,8 +284,8 @@
         }
 
         .cantidad-badge {
-            background: #f0f0f0;
-            color: #6366f1;
+            background: #f3e5f5;
+            color: #9C27B0;
             padding: 3px 8px;
             border-radius: 3px;
             font-size: 12px;
@@ -294,21 +325,21 @@
         }
 
         .btn-success {
-            background: #3b82f6;
+            background: #4CAF50;
             color: white;
         }
 
         .btn-success:hover {
-            background: #2563eb;
+            background: #3d9641;
         }
 
         .btn-warning {
-            background: #8b5cf6;
+            background: #1565C0;
             color: white;
         }
 
         .btn-warning:hover {
-            background: #7c3aed;
+            background: #0d47a1;
         }
 
         /* ── ESTADO VACÍO ── */
@@ -336,11 +367,11 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: #3b82f6;
+            background: #9C27B0;
             color: white;
             padding: 12px 16px;
             border-radius: 4px;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
             z-index: 1000;
             animation: slideInUp 0.3s ease-out;
             max-width: 280px;
@@ -427,9 +458,12 @@
         const API_URL = "{% url 'api_pedidos_activos' %}";
         const UPDATE_INTERVAL = 3000; // 3 segundos
         const NOTIFICATION_DURATION = 3000; // 3 segundos
+        const RECENT_HIGHLIGHT_DURATION = 7000; // 7 segundos
         
         let lastPedidoIds = new Set();
         let updateTimer = null;
+        let highlightedRecentOrderId = null;
+        let highlightedRecentUntil = 0;
 
         // ── FUNCIONES AUXILIARES ──
 
@@ -464,6 +498,14 @@
             const iconoMesa = getIconoMesa(pedido.mesa_o_online);
             const clasesNuevo = pedido.es_nuevo ? 'nuevo' : '';
             const clasesEstado = pedido.estado;
+            const esRecienteDestacado = (
+                highlightedRecentOrderId === pedido.id &&
+                Date.now() < highlightedRecentUntil
+            );
+            const claseReciente = esRecienteDestacado ? 'reciente-destacado' : '';
+            const badgeRecienteHTML = esRecienteDestacado
+                ? '<span class="badge-reciente">RECIENTE</span>'
+                : '';
 
             let productosHTML = '';
             if (pedido.items.length === 0) {
@@ -497,7 +539,8 @@
             }
 
             return `
-                <div class="pedido-card ${clasesNuevo} ${clasesEstado}">
+                <div class="pedido-card ${clasesNuevo} ${clasesEstado} ${claseReciente}">
+                    ${badgeRecienteHTML}
                     <div class="card-header">
                         <div class="card-title">
                             <h2>#${pedido.id}</h2>
@@ -575,6 +618,23 @@
                 const nuevosPedidos = data.pedidos.filter(p => !lastPedidoIds.has(p.id));
                 if (nuevosPedidos.length > 0 && lastPedidoIds.size > 0) {
                     mostrarNotificacion(`🔔 ${nuevosPedidos.length} nueva(s) orden(es)`);
+
+                    // Resaltar solo el pedido más reciente que acaba de aparecer.
+                    const pedidoMasReciente = nuevosPedidos.reduce((actual, siguiente) => {
+                        return new Date(siguiente.fecha_creacion) > new Date(actual.fecha_creacion)
+                            ? siguiente
+                            : actual;
+                    });
+
+                    highlightedRecentOrderId = pedidoMasReciente.id;
+                    highlightedRecentUntil = Date.now() + RECENT_HIGHLIGHT_DURATION;
+
+                    setTimeout(() => {
+                        if (Date.now() >= highlightedRecentUntil) {
+                            highlightedRecentOrderId = null;
+                            actualizarPedidos();
+                        }
+                    }, RECENT_HIGHLIGHT_DURATION + 100);
                 }
 
                 // Actualizar lista de IDs

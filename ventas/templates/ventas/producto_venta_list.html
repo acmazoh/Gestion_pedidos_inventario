@@ -3,9 +3,14 @@
 <head>
     <title>Productos Disponibles - POS</title>
     <style>
-        body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; }
+        body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; background:#FFFFFF; color:#000000; }
         nav { margin-bottom: 16px; }
         .logout-btn { float: right; }
+        nav a { color:#2196F3; font-weight:bold; text-decoration:none; }
+        nav a:hover { color:#1565C0; }
+        button { background:#2196F3; color:#fff; border:none; border-radius:4px; padding:8px 12px; cursor:pointer; }
+        button:hover { background:#1565C0; }
+        .categoria-activa { color:#9C27B0; }
     </style>
 </head>
 <body>
@@ -15,13 +20,13 @@
         <a href="{% url 'cocina_dashboard' %}">Cocina</a>
         <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
             {% csrf_token %}
-            <button type="submit" style="background:none;border:none;color:#c00;cursor:pointer;padding:0;">Cerrar Sesión ({{ request.user.username }})</button>
+            <button type="submit" style="background:none;border:none;color:#9C27B0;cursor:pointer;padding:0;font-weight:bold;">Cerrar Sesión ({{ request.user.username }})</button>
         </form>
     </nav>
 
     <h1>Interfaz de Ventas — Productos Disponibles</h1>
 
-    <h2>Categorías</h2>
+    <h2 style="color:#9C27B0;">Categorías</h2>
     <div>
         {% for categoria in categorias %}
         <button onclick="window.location.href='?categoria={{ categoria.id }}'">{{ categoria.nombre }}</button>
@@ -29,11 +34,11 @@
     </div>
     
     {% if categoria_seleccionada %}
-    <h2>Productos en la categoría: {{ categoria_seleccionada.nombre }}</h2>
+    <h2 class="categoria-activa">Productos en la categoría: {{ categoria_seleccionada.nombre }}</h2>
     <ul>
         {% for producto in productos %}
         <li>
-            <strong>{{ producto.nombre }}</strong> - ${{ producto.precio }}<br>
+            <strong>{{ producto.nombre }}</strong> - <span style="color:#1565C0; font-weight:bold;">${{ producto.precio }}</span><br>
             Categoría: {{ producto.categoria }}<br>
             Descripción: {{ producto.descripcion|default:"Sin descripción" }}<br>
             Ingredientes: {% for ing in producto.ingredientes.all %}{{ ing.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}

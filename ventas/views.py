@@ -112,8 +112,8 @@ class PedidoListView(LoginRequiredMixin, ListView):
     context_object_name = 'pedidos'
 
     def get_queryset(self):
-        # Show only orders created by the current user
-        return super().get_queryset().filter(creado_por=self.request.user)
+        # Mostrar todos los pedidos para operación compartida del POS.
+        return super().get_queryset().order_by('-fecha_creacion')
 
 
 class PedidoDetailView(LoginRequiredMixin, ListView):
@@ -122,7 +122,7 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
     context_object_name = 'items'
 
     def get(self, request, pk, *args, **kwargs):
-        pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
+        pedido = get_object_or_404(Pedido, pk=pk)
         form = PedidoProductoForm()
         items = list(pedido.items.select_related('producto'))
         for item in items:
@@ -136,7 +136,7 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
         })
 
     def post(self, request, pk, *args, **kwargs):
-        pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
+        pedido = get_object_or_404(Pedido, pk=pk)
         form = PedidoProductoForm(request.POST)
         if form.is_valid():
             producto = form.cleaned_data['producto']
@@ -165,7 +165,7 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
 
 class PedidoProductoDeleteView(LoginRequiredMixin, View):
     def post(self, request, pedido_pk, item_pk, *args, **kwargs):
-        pedido = get_object_or_404(Pedido, pk=pedido_pk, creado_por=request.user)
+        pedido = get_object_or_404(Pedido, pk=pedido_pk)
         if pedido.estado != 'pendiente':
             return redirect('pedido_detail', pk=pedido_pk)
         item = get_object_or_404(PedidoProducto, pk=item_pk, pedido=pedido)
@@ -175,7 +175,7 @@ class PedidoProductoDeleteView(LoginRequiredMixin, View):
 
 class PedidoProductoQuantityUpdateView(LoginRequiredMixin, View):
     def post(self, request, pedido_pk, item_pk, *args, **kwargs):
-        pedido = get_object_or_404(Pedido, pk=pedido_pk, creado_por=request.user)
+        pedido = get_object_or_404(Pedido, pk=pedido_pk)
         if pedido.estado != 'pendiente':
             return redirect('pedido_detail', pk=pedido_pk)
         item = get_object_or_404(PedidoProducto, pk=item_pk, pedido=pedido)
@@ -196,7 +196,7 @@ class PedidoProductoQuantityUpdateView(LoginRequiredMixin, View):
 
 class PedidoConfirmarView(LoginRequiredMixin, View):
     def post(self, request, pk, *args, **kwargs):
-        pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
+        pedido = get_object_or_404(Pedido, pk=pk)
 
         # Solo puede confirmarse un pedido pendiente con al menos un producto.
         if pedido.estado != 'pendiente':
