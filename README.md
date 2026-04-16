@@ -165,6 +165,32 @@ La transacción se crea automáticamente cuando el cocinero marca un pedido como
 
 ---
 
+## Vista de Cocina en Tiempo Real (RF-08)
+
+La vista de cocina proporciona una interfaz en tiempo real para que el personal de cocina visualice y gestione los pedidos activos sin necesidad de recargar la página.
+
+### Cómo funciona
+
+1. **Acceso**: Los usuarios con rol de cocinero pueden acceder a la vista en `/ventas/cocina/`.
+2. **Actualización automática**: La página se actualiza automáticamente cada 3 segundos mediante AJAX polling para mostrar nuevos pedidos en tiempo real.
+3. **Visualización de pedidos**:
+   - Los pedidos se muestran como tarjetas visuales con diseño moderno.
+   - Cada tarjeta incluye: mesa/cliente, hora de creación, lista de productos con cantidades, y estado actual.
+   - Los pedidos nuevos (creados hace menos de 30 segundos) se destacan con color rojo y animación.
+4. **Estados de los pedidos**:
+   - **En preparación** (naranja): Pedido confirmado y en proceso.
+   - **Listo** (verde): Pedido preparado y listo para entrega.
+5. **Interacción**:
+   - El cocinero puede cambiar el estado de un pedido haciendo clic en los botones correspondientes.
+   - Al marcar como "Listo", el pedido pasa a estado `entregada` y se registra la transacción de venta.
+6. **Notificaciones**: Aparecen alertas emergentes cuando llegan nuevos pedidos.
+7. **Diseño responsivo**: Funciona en dispositivos de escritorio y móviles.
+8. **Optimización**: La actualización se pausa cuando la pestaña no está activa para ahorrar recursos.
+
+
+
+---
+
 ## Equipo de desarrollo
 
 | Integrante | Usuario | Contribuciones |
