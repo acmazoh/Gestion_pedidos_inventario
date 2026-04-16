@@ -3,39 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Crear Nuevo Pedido</title>
-    <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 0 16px; background:#FFFFFF; color:#000000; }
-        nav { margin-bottom: 16px; }
-        .msg-success { background:#e8f5e9; border:1px solid #4CAF50; padding:8px 12px; border-radius:4px; margin-bottom:12px; }
-        .msg-error   { background:#fce4ec; border:1px solid #9C27B0; padding:8px 12px; border-radius:4px; margin-bottom:12px; }
-        .logout-btn { float:right; }
-        nav a { color:#2196F3; font-weight:bold; text-decoration:none; }
-        nav a:hover { color:#1565C0; }
-        input[type="text"], select { width:100%; padding:6px; box-sizing:border-box; border:1px solid #2196F3; border-radius:4px; }
-        button[type="submit"] { margin-top:12px; padding:8px 20px; background:#2196F3; color:#fff; border:none; border-radius:4px; cursor:pointer; }
-        button[type="submit"]:hover { background:#1565C0; }
-    </style>
 </head>
 <body>
-    <nav>
-        <a href="{% url 'pedido_list' %}">Ver Pedidos</a> |
-        <a href="{% url 'venta_list' %}">Productos</a>
-        <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
-            {% csrf_token %}
-            <button type="submit" style="background:none;border:none;color:#9C27B0;cursor:pointer;padding:0;font-weight:bold;">Cerrar Sesión ({{ request.user.username }})</button>
-        </form>
-    </nav>
-
-    <h1>Crear Nueva Orden</h1>
-
-    {% for message in messages %}
-    <div class="{% if message.tags == 'error' %}msg-error{% else %}msg-success{% endif %}">{{ message }}</div>
-    {% endfor %}
-
+    <h1>Crear Nuevo Pedido</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Crear Orden</button>
+        <button type="submit">Crear Pedido</button>
     </form>
+    <div>
+        <a href="{% url 'pedido_list' %}">Ver Pedidos</a> |
+        <a href="{% url 'venta_list' %}">Volver a Productos</a>
+    </div>
 </body>
 </html>

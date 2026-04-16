@@ -8,7 +8,6 @@ class Pedido(models.Model):
         ('pendiente', 'Pendiente'),
         ('en_preparacion', 'En Preparación'),
         ('listo', 'Listo'),
-        ('entregada', 'Entregada'),
         ('pagado', 'Pagado'),
     ]
 
@@ -32,13 +31,3 @@ class PedidoProducto(models.Model):
 
     def __str__(self):
         return f"{self.cantidad} x {self.producto.nombre} (Pedido {self.pedido.id})"
-
-
-class Transaccion(models.Model):
-    """Registra automáticamente cada venta cuando el pedido pasa a estado 'entregada'."""
-    pedido = models.OneToOneField(Pedido, on_delete=models.CASCADE, related_name='transaccion')
-    total = models.DecimalField(max_digits=10, decimal_places=2)
-    fecha = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Venta #{self.id} | Pedido {self.pedido.id} | ${self.total}"

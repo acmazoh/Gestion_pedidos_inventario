@@ -1,60 +1,19 @@
-{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>Gestión de Productos</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'ventas/restin-theme.css' %}">
 </head>
 <body>
-    <div class="page-shell">
-        <div class="page-container stack">
-            <nav class="top-nav">
-                <div class="nav-links">
-                    <a class="nav-link is-active" href="{% url 'producto_list' %}">Productos</a>
-                    <a class="nav-link" href="{% url 'ingrediente_list' %}">Ingredientes</a>
-                    <a class="nav-link" href="{% url 'movimiento_list' %}">Movimientos</a>
-                </div>
-                <a href="{% url 'producto_create' %}" class="btn btn-primary">Crear nuevo producto</a>
-            </nav>
-
-            <header class="page-header">
-                <h1 class="page-title">Gestión de productos</h1>
-                <p class="page-subtitle">Administra el menú y mantén los productos conectados con ingredientes e inventario.</p>
-            </header>
-
-            <section class="page-card">
-                <div class="table-wrap">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Categoría</th>
-                                <th>Precio</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for producto in productos %}
-                            <tr>
-                                <td>{{ producto.nombre }}</td>
-                                <td><span class="status-pill status-highlight">{{ producto.categoria }}</span></td>
-                                <td>${{ producto.precio }}</td>
-                                <td class="actions-row">
-                                    <a href="{% url 'producto_update' producto.pk %}" class="btn btn-ghost">Editar</a>
-                                    <a href="{% url 'producto_delete' producto.pk %}" class="btn btn-danger">Eliminar</a>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="muted">No hay productos registrados.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
-    </div>
+    <h1>Productos</h1>
+    <a href="{% url 'producto_create' %}">Crear Nuevo Producto</a>
+    <ul>
+        {% for producto in productos %}
+        <li>
+            {{ producto.nombre }} - {{ producto.categoria }} - ${{ producto.precio }}
+            <a href="{% url 'producto_update' producto.pk %}">Editar</a>
+            <a href="{% url 'producto_delete' producto.pk %}">Eliminar</a>
+        </li>
+        {% endfor %}
+    </ul>
 </body>
 </html>

@@ -16,14 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.contrib.auth import views as auth_views
-from ventas.views import RateLimitedLoginView
+from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Template-based views (mantener compatibilidad)
     path('products/', include('products.urls')),
     path('ventas/', include('ventas.urls')),
-    path('users/', include('users.urls')),
-    path('accounts/login/', RateLimitedLoginView.as_view(), name='login'),
-    path('accounts/logout/', auth_views.LogoutView.as_view(next_page='/accounts/login/'), name='logout'),
+    # REST API
+    path('api/auth/login/', obtain_auth_token, name='api_login'),
+    path('api/', include('products.api_urls')),
+    path('api/', include('ventas.api_urls')),
 ]

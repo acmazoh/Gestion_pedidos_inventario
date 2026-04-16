@@ -1,30 +1,15 @@
-{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>{% if form.instance.pk %}Editar{% else %}Crear{% endif %} Producto</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'ventas/restin-theme.css' %}">
 </head>
 <body>
-    <div class="page-shell">
-        <div class="page-container">
-            <header class="page-header">
-                <h1 class="page-title">{% if form.instance.pk %}Editar{% else %}Crear{% endif %} producto</h1>
-                <p class="page-subtitle">Configura nombre, categoría, precio e ingredientes asociados al producto.</p>
-            </header>
-
-            <section class="page-card">
-                <form method="post" class="stack">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <div class="actions-row">
-                        <button type="submit" class="btn btn-primary">Guardar</button>
-                        <a href="{% url 'producto_list' %}" class="btn btn-ghost">Volver</a>
-                    </div>
-                </form>
-            </section>
-        </div>
-    </div>
+    <h1>{% if form.instance.pk %}Editar{% else %}Crear{% endif %} Producto</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Guardar</button>
+    </form>
+    <a href="{% url 'producto_list' %}">Volver</a>
 </body>
 </html>
