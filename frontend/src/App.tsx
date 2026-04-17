@@ -1,4 +1,5 @@
 import { useState, createContext, useContext } from 'react';
+import { useMe } from './hooks/useMe';
 import {
   BrowserRouter,
   Routes,
@@ -13,6 +14,7 @@ import { OrderPanel }         from './components/orders/OrderPanel';
 import { useOrder }           from './hooks/useOrder';
 import { login as apiLogin }  from './api/orders';
 import { TOKEN_KEY }          from './api/client';
+import { KitchenDashboard } from './components/orders/KitchenDashboard';
 
 // ── Contexto de Auth ───────────────────────────────────────────────────────
 
@@ -29,21 +31,47 @@ function PrivateRoute() {
 
 // ── Layout principal ───────────────────────────────────────────────────────
 
-const NAV_ITEMS = [
-  { to: '/pos',      label: '🍽️  POS'        },
-  { to: '/orders',   label: '📋  Orden'       },
-  { to: '/products', label: '⚙️  Productos'   },
-];
+
+const NAV_ITEMS_BY_ROLE: Record<string, { to: string; label: string }[]> = {
+  admin: [
+    { to: '/pos', label: '🍽️  POS' },
+    { to: '/orders', label: '📋  Orden' },
+    { to: '/products', label: '⚙️  Productos' },
+    // { to: '/ingredients', label: '🧂 Ingredientes' },
+    // { to: '/users', label: '👥 Usuarios' },
+    // { to: '/sales', label: '💵 Ventas' },
+  ],
+  mesero: [
+    { to: '/pos', label: '🍽️  POS' },
+    { to: '/orders', label: '📋  Orden' },
+  ],
+  cocinero: [
+    { to: '/kitchen', label: '👨‍🍳 Cocina' },
+  ],
+  cajero: [
+    { to: '/orders', label: '📋  Orden' },
+    // { to: '/sales', label: '💵 Ventas' },
+  ],
+};
+
 
 function AppLayout() {
   const { logout } = useAuth();
+  const { me, loading } = useMe();
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Cargando menú...</div>;
+  }
+
+  const role = me?.role || 'mesero';
+  const NAV_ITEMS = NAV_ITEMS_BY_ROLE[role] || NAV_ITEMS_BY_ROLE['mesero'];
 
   return (
-    <div className="flex h-screen flex-col bg-gray-100 overflow-hidden">
+    <div className="flex h-screen flex-col bg-gray-50 overflow-hidden">
       {/* Barra de navegación superior */}
-      <header className="bg-gray-900 text-white px-4 py-2 flex items-center justify-between shadow-lg shrink-0">
-        <span className="font-bold text-lg text-brand-400 tracking-tight">
-          RestaurantPOS
+      <header className="bg-gray-800 text-white px-5 py-3 flex items-center justify-between shadow-lg shrink-0">
+        <span className="font-bold text-lg tracking-tight text-white">
+          🍽️ RestaurantPOS
         </span>
         <nav className="flex gap-1">
           {NAV_ITEMS.map(({ to, label }) => (
@@ -53,8 +81,8 @@ function AppLayout() {
               className={({ isActive }) =>
                 `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-brand-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700'
+                    ? 'bg-primary-500 text-white'
+                    : 'text-gray-400 hover:bg-white/10 hover:text-white'
                 }`
               }
             >
@@ -64,7 +92,7 @@ function AppLayout() {
         </nav>
         <button
           onClick={logout}
-          className="text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded hover:bg-gray-700"
+          className="text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/10"
         >
           Salir
         </button>
@@ -86,15 +114,22 @@ function POSWithPanel() {
   return (
     <div className="flex h-full overflow-hidden">
       {/* Catálogo (izquierda) */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-hidden">
         <POSView onAddToOrder={(producto) => orderHook.addProduct(producto.id)} />
       </div>
       {/* Panel de orden (derecha, fijo) */}
-      <aside className="w-80 xl:w-96 shrink-0 overflow-y-auto bg-white border-l border-gray-200 shadow-lg">
-        <div className="sticky top-0 bg-white border-b px-4 py-3">
-          <h2 className="font-semibold text-gray-800">Orden en curso</h2>
+      <aside className="w-80 xl:w-96 shrink-0 flex flex-col bg-gray-50 border-l border-gray-200 shadow-xl">
+        {/* Header del panel */}
+        <div className="bg-white border-b border-gray-100 px-5 py-4 shrink-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="w-2 h-2 rounded-full bg-success-500 animate-pulse" />
+            <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest">Orden activa</p>
+          </div>
+          <h2 className="font-extrabold text-gray-900 text-lg">
+            {orderHook.order ? `Mesa · #${orderHook.order.id}` : 'Nueva orden'}
+          </h2>
         </div>
-        <div className="p-3">
+        <div className="flex-1 overflow-y-auto p-4">
           <InlineOrderPanel hook={orderHook} />
         </div>
       </aside>
@@ -103,7 +138,6 @@ function POSWithPanel() {
 }
 
 // Versión inline del OrderPanel que recibe el hook ya instanciado
-// (para compartir el mismo estado entre POSView y el panel)
 function InlineOrderPanel({ hook }: { hook: ReturnType<typeof useOrder> }) {
   const { order, loading, error, shortages,
           startOrder, updateQty, removeProduct, confirm, resetOrder, clearError } = hook;
@@ -113,109 +147,179 @@ function InlineOrderPanel({ hook }: { hook: ReturnType<typeof useOrder> }) {
 
   if (success && order) {
     return (
-      <div className="text-center py-8 space-y-3">
-        <div className="text-5xl">✅</div>
-        <p className="font-semibold text-gray-800">Orden #{order.id} confirmada</p>
+      <div className="text-center py-10 space-y-4">
+        <div className="w-16 h-16 bg-success-100 rounded-full flex items-center justify-center mx-auto">
+          <span className="text-3xl">✅</span>
+        </div>
+        <div>
+          <p className="font-bold text-gray-900 text-lg">¡Orden enviada!</p>
+          <p className="text-sm text-gray-500 mt-1">Orden #{order.id} enviada a cocina</p>
+        </div>
         <button
           onClick={() => { resetOrder(); setSuccess(false); }}
-          className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm"
+          className="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-xl text-sm font-semibold transition-colors"
         >
-          Nueva Orden
+          + Nueva Orden
         </button>
       </div>
     );
   }
 
   if (!order) {
+    if (loading) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 gap-4">
+          <div className="w-10 h-10 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+          <p className="text-sm text-gray-400 font-medium">Creando orden…</p>
+        </div>
+      );
+    }
     return (
-      <form
-        onSubmit={async (e) => { e.preventDefault(); if (mesa.trim()) { await startOrder(mesa.trim()); setMesa(''); } }}
-        className="space-y-3"
-      >
-        <p className="text-sm text-gray-500">Ingresa mesa o cliente para comenzar.</p>
-        <input
-          type="text"
-          value={mesa}
-          onChange={(e) => setMesa(e.target.value)}
-          placeholder="Mesa 3 / Cliente Juan"
-          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-        />
-        <button
-          type="submit"
-          disabled={loading || !mesa.trim()}
-          className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white py-2 rounded-lg text-sm font-medium"
+      <div className="py-6 space-y-4">
+        <div className="text-center py-4">
+          <span className="text-5xl">🛎️</span>
+          <p className="text-gray-600 font-medium mt-3 text-sm">¿Para qué mesa o cliente?</p>
+          <p className="text-gray-400 text-xs mt-1">O simplemente agrega un producto para comenzar</p>
+        </div>
+        <form
+          onSubmit={async (e) => { e.preventDefault(); if (mesa.trim()) { await startOrder(mesa.trim()); setMesa(''); } }}
+          className="space-y-3"
         >
-          {loading ? 'Creando…' : 'Iniciar Orden'}
-        </button>
-      </form>
+          <input
+            type="text"
+            value={mesa}
+            onChange={(e) => setMesa(e.target.value)}
+            placeholder="Mesa 3 / Cliente Juan…"
+            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent bg-gray-50"
+          />
+          <button
+            type="submit"
+            disabled={loading || !mesa.trim()}
+            className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-40 text-white py-3 rounded-xl text-sm font-semibold transition-colors"
+          >
+            {loading ? 'Creando…' : 'Iniciar Orden'}
+          </button>
+        </form>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-3 text-sm">
-      {error && <div className="text-red-600 text-xs bg-red-50 p-2 rounded-lg">{error}</div>}
+    <div className="flex flex-col gap-3 text-sm h-full">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl p-3 flex justify-between items-start">
+          <span>{error}</span>
+          <button onClick={clearError} className="text-red-400 hover:text-red-600 ml-2 font-bold">✕</button>
+        </div>
+      )}
       {shortages.length > 0 && (
-        <div className="bg-red-50 border border-red-300 rounded-lg p-2 text-xs text-red-700">
-          <strong>Stock insuficiente:</strong>
-          <ul className="mt-1 space-y-0.5 list-disc list-inside">
+        <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-xs text-orange-700">
+          <p className="font-semibold mb-1">⚠️ Stock insuficiente:</p>
+          <ul className="space-y-0.5 list-disc list-inside">
             {shortages.map((s, i) => (
               <li key={i}>{s.ingrediente}: falta {s.missing} {s.unidad}</li>
             ))}
           </ul>
-          <button onClick={clearError} className="mt-1 text-red-500 underline text-xs">Cerrar</button>
+          <button onClick={clearError} className="mt-2 text-orange-500 underline">Cerrar</button>
         </div>
       )}
 
       {/* Ítems */}
-      <div className="space-y-1 max-h-60 overflow-y-auto">
-        {order.items.length === 0 && (
-          <p className="text-gray-400 text-center py-4">Sin productos aún.</p>
-        )}
-        {order.items.map((item) => (
-          <div key={item.id} className="flex items-center gap-1 bg-gray-50 rounded-lg px-2 py-1">
-            <span className="flex-1 text-xs truncate">{item.producto.nombre}</span>
-            <button onClick={() => updateQty(item.id, item.cantidad - 1)} className="px-1 text-gray-500 hover:text-gray-800">−</button>
-            <span className="w-4 text-center font-semibold">{item.cantidad}</span>
-            <button onClick={() => updateQty(item.id, item.cantidad + 1)} className="px-1 text-gray-500 hover:text-gray-800">+</button>
-            <span className="w-12 text-right text-xs font-medium">${item.subtotal.toFixed(2)}</span>
-            <button onClick={() => removeProduct(item.id)} className="text-red-400 hover:text-red-600 text-xs ml-1">✕</button>
+      <div className="space-y-2 flex-1">
+        {order.items.length === 0 ? (
+          <div className="text-center py-10 text-gray-300">
+            <p className="text-4xl mb-2">🛒</p>
+            <p className="text-xs font-medium">Agrega productos desde el catálogo</p>
           </div>
-        ))}
+        ) : (
+          order.items.map((item) => (
+            <div key={item.id} className="flex items-center gap-2 bg-white hover:bg-gray-50 rounded-xl px-3 py-2.5 transition-colors group border border-gray-100">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-gray-800 truncate">{item.producto.nombre}</p>
+                <p className="text-[10px] text-gray-400">${Math.round(Number(item.producto?.precio ?? 0)).toLocaleString('es-CO')} c/u</p>
+              </div>
+              {/* Controles de cantidad */}
+              <div className="flex items-center gap-1 bg-white rounded-lg border border-gray-200 px-1">
+                <button
+                  onClick={() => updateQty(item.id, item.cantidad - 1)}
+                  className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-primary-600 font-bold text-base"
+                >−</button>
+                <span className="w-5 text-center text-xs font-bold text-gray-800">{item.cantidad}</span>
+                <button
+                  onClick={() => updateQty(item.id, item.cantidad + 1)}
+                  className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-primary-600 font-bold text-base"
+                >+</button>
+              </div>
+              <span className="text-xs font-bold text-primary-700 w-14 text-right">
+                ${Math.round(item.subtotal).toLocaleString('es-CO')}
+              </span>
+              <button
+                onClick={() => removeProduct(item.id)}
+                className="w-5 h-5 flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+              >✕</button>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Totales */}
       {order.items.length > 0 && (
-        <div className="border-t pt-2 space-y-1 text-xs text-gray-600">
-          <div className="flex justify-between"><span>Subtotal</span><span>${order.subtotal.toFixed(2)}</span></div>
-          <div className="flex justify-between"><span>IVA 19%</span><span>${order.impuesto.toFixed(2)}</span></div>
-          <div className="flex justify-between font-bold text-sm text-gray-900 border-t pt-1 mt-1">
-            <span>Total</span><span>${order.total.toFixed(2)}</span>
+        <div className="border-t border-gray-100 pt-3 space-y-2">
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>Subtotal</span>
+            <span>${Math.round(order.subtotal).toLocaleString('es-CO')}</span>
+          </div>
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>IVA 19%</span>
+            <span>${Math.round(order.impuesto).toLocaleString('es-CO')}</span>
+          </div>
+          <div className="flex justify-between items-center bg-gray-900 rounded-xl px-3 py-2.5 mt-2">
+            <span className="font-bold text-white text-sm">Total</span>
+            <span className="font-extrabold text-primary-400 text-lg">${Math.round(order.total).toLocaleString('es-CO')}</span>
           </div>
         </div>
       )}
 
       {/* Acciones */}
-      <div className="flex gap-2">
-        <button onClick={() => resetOrder()} className="flex-1 border border-gray-300 text-gray-600 py-1.5 rounded-lg text-xs">Cancelar</button>
+      <div className="flex gap-2 pt-1">
+        <button
+          onClick={() => resetOrder()}
+          className="flex-none border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-xl text-xs font-semibold transition-colors"
+        >
+          Cancelar
+        </button>
         <button
           onClick={() => setConfirmOpen(true)}
           disabled={loading || order.items.length === 0}
-          className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white py-1.5 rounded-lg text-xs font-medium"
+          className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:opacity-40 text-white py-3 rounded-xl text-sm font-bold transition-colors shadow-sm shadow-primary-200"
         >
-          Confirmar
+          Confirmar pedido →
         </button>
       </div>
 
       {confirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full space-y-4">
-            <h3 className="font-semibold text-gray-900">Confirmar orden #{order.id}</h3>
-            <p className="text-sm text-gray-600">Se enviará a cocina y se descontará el inventario. ¿Continuar?</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full space-y-5">
+            <div className="text-center">
+              <span className="text-4xl">🍳</span>
+              <h3 className="font-bold text-gray-900 text-lg mt-2">Enviar a cocina</h3>
+              <p className="text-sm text-gray-500 mt-1">Orden #{order.id} · {order.items.length} producto(s)</p>
+            </div>
+            <div className="bg-primary-50 rounded-xl p-3 text-center">
+              <p className="text-xs text-gray-500">Total a cobrar</p>
+              <p className="text-2xl font-extrabold text-primary-700">${Math.round(order.total).toLocaleString('es-CO')}</p>
+            </div>
+            <p className="text-xs text-gray-400 text-center">Se descontará el inventario automáticamente.</p>
             <div className="flex gap-3">
-              <button onClick={() => setConfirmOpen(false)} className="flex-1 border border-gray-300 py-2 rounded-lg text-sm">Cancelar</button>
+              <button
+                onClick={() => setConfirmOpen(false)}
+                className="flex-1 border border-gray-200 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50"
+              >
+                Volver
+              </button>
               <button
                 onClick={async () => { setConfirmOpen(false); const ok = await confirm(); if (ok) setSuccess(true); }}
-                className="flex-1 bg-brand-600 text-white py-2 rounded-lg text-sm font-medium"
+                className="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-xl text-sm font-bold transition-colors"
               >
                 Confirmar
               </button>
@@ -252,46 +356,56 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-primary-600 flex items-center justify-center p-4">
+      {/* Decoración de fondo */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/5 rounded-full" />
+        <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] bg-white/5 rounded-full" />
+      </div>
+      <div className="relative bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm space-y-7">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-brand-600">🍽️ RestPOS</h1>
-          <p className="text-gray-500 mt-1 text-sm">Inicia sesión para continuar</p>
+          <div className="w-16 h-16 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-200">
+            <span className="text-3xl">🍽️</span>
+          </div>
+          <h1 className="text-2xl font-extrabold text-gray-900">RestaurantPOS</h1>
+          <p className="text-gray-400 mt-1 text-sm">Bienvenido de vuelta</p>
         </div>
 
         {err && (
-          <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm">
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2.5 rounded-xl text-sm">
             {err}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Usuario</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              placeholder="Ej: admin"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent bg-gray-50 transition"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Contraseña</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              placeholder="••••••••"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent bg-gray-50 transition"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white py-2 rounded-lg font-medium transition-colors"
+            className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white py-3.5 rounded-xl font-bold text-sm transition-colors shadow-md shadow-primary-200 mt-2"
           >
-            {loading ? 'Entrando…' : 'Iniciar sesión'}
+            {loading ? 'Ingresando…' : 'Iniciar sesión →'}
           </button>
         </form>
       </div>
@@ -330,6 +444,7 @@ export default function App() {
               <Route path="/pos"      element={<POSWithPanel />} />
               <Route path="/orders"   element={<div className="h-full overflow-y-auto p-4"><OrderPanel /></div>} />
               <Route path="/products" element={<div className="h-full overflow-y-auto p-4"><ProductsManagement /></div>} />
+              <Route path="/kitchen" element={<div className="h-full overflow-y-auto p-4"><KitchenDashboard /></div>} />
             </Route>
           </Route>
 

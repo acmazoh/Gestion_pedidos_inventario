@@ -7,8 +7,17 @@ class Categoria(models.Model):
         return self.nombre
 
 class Ingrediente(models.Model):
+    UNIDAD_CHOICES = [
+        ('unidad', 'Unidad'),
+        ('gramo', 'Gramo'),
+        ('kilogramo', 'Kilogramo'),
+        ('mililitro', 'Mililitro'),
+        ('litro', 'Litro'),
+        ('porcion', 'Porción'),
+    ]
     nombre = models.CharField(max_length=100, unique=True)
     stock = models.PositiveIntegerField(default=0, help_text="Cantidad disponible en inventario")
+    unidad_medida = models.CharField(max_length=20, choices=UNIDAD_CHOICES, default='unidad')
 
     def __str__(self):
         return self.nombre

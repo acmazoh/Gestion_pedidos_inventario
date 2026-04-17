@@ -11,4 +11,8 @@ urlpatterns = [
     path('pedidos/<int:pedido_pk>/items/<int:item_pk>/incrementar/', views.PedidoProductoQuantityUpdateView.as_view(), name='pedido_item_increment'),
     path('pedidos/<int:pedido_pk>/items/<int:item_pk>/disminuir/', views.PedidoProductoQuantityUpdateView.as_view(), name='pedido_item_decrement'),
     path('pedidos/<int:pedido_pk>/items/<int:item_pk>/eliminar/', views.PedidoProductoDeleteView.as_view(), name='pedido_item_delete'),
+    path('pedidos/<int:pk>/marcar_listo/', views.MarcarListoView.as_view(), name='marcar_listo'),
+    path('pedidos/<int:pk>/marcar_entregado/', views.MarcarEntregadoView.as_view(), name='marcar_entregado'),
+    path('historial/', views.HistorialVentasView.as_view(), name='historial_ventas'),
+    path('historial/csv/', views.historial_ventas_csv, name='historial_ventas_csv'),
 ]

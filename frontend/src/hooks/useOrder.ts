@@ -45,13 +45,21 @@ export function useOrder() {
     }
   }, []);
 
-  /** Agregar producto → los totales vienen actualizados del backend (RF-06). */
+  /** Agregar producto → si no hay orden activa la crea automáticamente (RF-06). */
   const addProduct = useCallback(async (productoId: number, cantidad = 1) => {
-    if (!order) return;
     setLoading(true);
     clearError();
     try {
-      setOrder(await addItem(order.id, productoId, cantidad));
+      // Auto-crear orden si no existe todavía
+      let activeOrder = order;
+      if (!activeOrder) {
+        activeOrder = await createOrder('Mesa');
+        setOrder(activeOrder);
+      }
+      // Si el producto ya está en la orden, sumar la cantidad actual
+      const existingItem = activeOrder.items?.find((item: any) => item.producto.id === productoId);
+      const cantidadFinal = existingItem ? existingItem.cantidad + cantidad : cantidad;
+      setOrder(await addItem(activeOrder.id, productoId, cantidadFinal));
     } catch {
       setError('No se pudo agregar el producto.');
     } finally {

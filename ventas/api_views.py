@@ -1,3 +1,40 @@
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+from django.utils import timezone
+
+class PedidosActivosAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        ahora = timezone.now()
+        pedidos = Pedido.objects.filter(estado__in=['en_preparacion', 'listo']).order_by('fecha_creacion')
+        pedidos_data = []
+        for pedido in pedidos:
+            items = [
+                {
+                    'id': item.id,
+                    'producto': item.producto.nombre,
+                    'cantidad': item.cantidad,
+                }
+                for item in pedido.items.select_related('producto')
+            ]
+            segundos_transcurridos = (ahora - pedido.fecha_creacion).total_seconds()
+            es_nuevo = segundos_transcurridos < 30
+            pedidos_data.append({
+                'id': pedido.id,
+                'mesa_o_online': pedido.mesa_o_online,
+                'estado': pedido.estado,
+                'fecha_creacion': pedido.fecha_creacion.isoformat(),
+                'hora_formateada': pedido.fecha_creacion.strftime('%H:%M'),
+                'items': items,
+                'es_nuevo': es_nuevo,
+                'total_items': len(items),
+            })
+        return Response({
+            'pedidos': pedidos_data,
+            'timestamp': ahora.isoformat(),
+            'total': len(pedidos_data),
+        })
 from decimal import Decimal
 from django.conf import settings
 from rest_framework import viewsets, status
@@ -79,6 +116,8 @@ class PedidoViewSet(viewsets.ModelViewSet):
             item.cantidad += cantidad
             item.save()
 
+        # Refrescar el pedido desde la base de datos para asegurar consistencia
+        pedido.refresh_from_db()
         return Response(self.get_serializer(pedido).data, status=status.HTTP_200_OK)
 
     # ── Eliminar ítem ────────────────────────────────────────────────────────
@@ -97,6 +136,7 @@ class PedidoViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Ítem no encontrado.'}, status=404)
 
         item.delete()
+        pedido.refresh_from_db()
         return Response(self.get_serializer(pedido).data, status=status.HTTP_200_OK)
 
     # ── Actualizar cantidad de ítem ──────────────────────────────────────────
@@ -121,6 +161,7 @@ class PedidoViewSet(viewsets.ModelViewSet):
             item.cantidad = cantidad
             item.save()
 
+        pedido.refresh_from_db()
         return Response(self.get_serializer(pedido).data, status=status.HTTP_200_OK)
 
     # ── RF-07: confirmar orden con validación de stock ───────────────────────

@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('products', '0002_ingrediente_stock_productoingrediente_and_more'),
+        ('products', '0004_ingrediente_unidad_medida'),
     ]
 
     operations = [
