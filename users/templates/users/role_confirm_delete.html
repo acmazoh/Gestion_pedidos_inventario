@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Eliminar Rol</h1>
+<p>¿Seguro que deseas eliminar el rol "{{ role.name }}"?</p>
+<form method="post">{% csrf_token %}
+    <button type="submit">Eliminar</button>
+    <a href="{% url 'role_list' %}">Cancelar</a>
+</form>
+{% endblock %}

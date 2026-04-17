@@ -1,12 +1,90 @@
+# Exportar historial de ventas a CSV
+from django.http import HttpResponse
+import csv
+
+def historial_ventas_csv(request):
+    desde = request.GET.get('desde')
+    hasta = request.GET.get('hasta')
+    transacciones = Transaccion.objects.all().select_related('pedido')
+    if desde:
+        transacciones = transacciones.filter(fecha__date__gte=desde)
+    if hasta:
+        transacciones = transacciones.filter(fecha__date__lte=hasta)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="historial_ventas.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Fecha', 'Pedido', 'Mesa / Cliente', 'Productos', 'Total'])
+    for t in transacciones.order_by('-fecha'):
+        productos = ', '.join([
+            f"{item.producto.nombre} x{item.cantidad}"
+            for item in t.pedido.items.select_related('producto').all()
+        ])
+        writer.writerow([
+            t.fecha.strftime('%d/%m/%Y %H:%M'),
+            t.pedido.id,
+            getattr(t.pedido, 'mesa_o_online', ''),
+            productos,
+            f"${t.total}"
+        ])
+    return response
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import View
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils import timezone
+from django.db.models import Sum
 from products.models import Producto, Categoria
-from .models import Pedido, PedidoProducto
+from .models import Pedido, PedidoProducto, Transaccion
 from .forms import PedidoForm, PedidoProductoForm
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
+# Historial de ventas
+class HistorialVentasView(LoginRequiredMixin, View):
+    template_name = 'ventas/historial_ventas.html'
+
+    def get(self, request):
+        desde = request.GET.get('desde')
+        hasta = request.GET.get('hasta')
+        transacciones = Transaccion.objects.all().select_related('pedido')
+        if desde:
+            transacciones = transacciones.filter(fecha__date__gte=desde)
+        if hasta:
+            transacciones = transacciones.filter(fecha__date__lte=hasta)
+        total_periodo = transacciones.aggregate(total=Sum('total'))['total'] or 0
+        return render(request, self.template_name, {
+            'transacciones': transacciones.order_by('-fecha'),
+            'desde': desde,
+            'hasta': hasta,
+            'total_periodo': total_periodo,
+        })
+
+# Cambiar estado de pedido desde cocina
+class MarcarListoView(LoginRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        pedido = get_object_or_404(Pedido, pk=pk)
+        if pedido.estado == 'en_preparacion':
+            pedido.estado = 'listo'
+            pedido.save()
+        return redirect('cocina_dashboard')
+
+
+class MarcarEntregadoView(LoginRequiredMixin, View):
+    def post(self, request, pk, *args, **kwargs):
+        pedido = get_object_or_404(Pedido, pk=pk)
+        if pedido.estado == 'listo':
+            pedido.estado = 'pagado'
+            pedido.save()
+            # Registrar transacción
+            total = 0
+            for item in pedido.items.select_related('producto'):
+                total += item.producto.precio * item.cantidad
+            Transaccion.objects.create(pedido=pedido, total=total)
+        return redirect('cocina_dashboard')
 
 
 class ProductoVentaListView(ListView):

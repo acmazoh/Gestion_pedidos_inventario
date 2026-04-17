@@ -5,63 +5,46 @@ import { Alert } from '../ui/Alert';
 import type { Producto } from '../../types';
 
 interface POSViewProps {
-  /** Callback al presionar un producto — el padre maneja agregar a la orden. */
   onAddToOrder?: (producto: Producto) => void;
 }
 
-/**
- * RF-02 — Catálogo POS
- * Grid de productos agrupados por categoría. Solo muestra los disponibles.
- * Diseño táctil optimizado para tablet (botones grandes).
- */
+// Azul y verde de la paleta, alternando
+const CARD_COLORS = [
+  'from-primary-400 to-primary-600',   // azul #2196F3
+  'from-success-400 to-success-600',   // verde #4CAF50
+];
+
 export function POSView({ onAddToOrder }: POSViewProps) {
-  // Solo carga productos disponibles (disponible=true)
   const { products, categories, loading, error, load } = useProducts(true);
   const [activeCat, setActiveCat] = useState<number | null>(null);
 
-  // Productos filtrados por categoría activa (null = todos)
   const filtered = useMemo(
     () => (activeCat ? products.filter((p) => p.categoria.id === activeCat) : products),
     [products, activeCat],
   );
 
-  // Categorías que tienen al menos un producto disponible
   const activeCats = useMemo(
-    () =>
-      categories.filter((c) =>
-        products.some((p) => p.categoria.id === c.id),
-      ),
+    () => categories.filter((c) => products.some((p) => p.categoria.id === c.id)),
     [categories, products],
   );
 
   return (
     <div className="flex h-full flex-col lg:flex-row gap-0 overflow-hidden">
       {/* ── Sidebar de categorías ──────────────────────────────────────── */}
-      <aside className="lg:w-48 shrink-0 bg-gray-900 text-white overflow-y-auto">
-        <div className="p-3 border-b border-gray-700">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-            Categorías
-          </h2>
+      <aside className="lg:w-52 shrink-0 bg-gray-800 overflow-y-auto flex flex-col">
+        <div className="px-4 py-4 border-b border-gray-700/60">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Menú</p>
+          <p className="text-white font-semibold text-sm">Categorías</p>
         </div>
-        <nav className="p-2 space-y-1">
-          <button
-            onClick={() => setActiveCat(null)}
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-              activeCat === null
-                ? 'bg-brand-600 text-white font-medium'
-                : 'text-gray-300 hover:bg-gray-800'
-            }`}
-          >
-            Todos
-          </button>
-          {activeCats.map((c) => (
+        <nav className="p-3 space-y-1 flex-1">
+          {[{ id: null, nombre: 'Todos los platos' }, ...activeCats.map(c => ({ id: c.id as number | null, nombre: c.nombre }))].map((c) => (
             <button
-              key={c.id}
+              key={c.id ?? 'all'}
               onClick={() => setActiveCat(c.id)}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+              className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 activeCat === c.id
-                  ? 'bg-brand-600 text-white font-medium'
-                  : 'text-gray-300 hover:bg-gray-800'
+                  ? 'bg-primary-500 text-white shadow-md'
+                  : 'text-gray-400 hover:bg-gray-700 hover:text-white'
               }`}
             >
               {c.nombre}
@@ -71,8 +54,7 @@ export function POSView({ onAddToOrder }: POSViewProps) {
       </aside>
 
       {/* ── Catálogo de productos ─────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto bg-gray-100 p-4">
-        {/* Barra de búsqueda rápida por nombre */}
+      <main className="flex-1 overflow-y-auto bg-gray-50 p-5">
         <SearchableGrid
           products={filtered}
           loading={loading}
@@ -101,9 +83,7 @@ function SearchableGrid({ products, loading, error, onReload, onAdd }: GridProps
   const visible = useMemo(
     () =>
       search.trim()
-        ? products.filter((p) =>
-            p.nombre.toLowerCase().includes(search.toLowerCase()),
-          )
+        ? products.filter((p) => p.nombre.toLowerCase().includes(search.toLowerCase()))
         : products,
     [products, search],
   );
@@ -111,28 +91,30 @@ function SearchableGrid({ products, loading, error, onReload, onAdd }: GridProps
   return (
     <div className="space-y-4">
       {/* Buscador */}
-      <input
-        type="search"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Buscar producto…"
-        className="w-full max-w-sm border border-gray-300 rounded-xl px-4 py-2 text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-      />
+      <div className="relative max-w-md">
+        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar producto..."
+          className="w-full border border-gray-200 rounded-2xl pl-9 pr-4 py-2.5 text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+        />
+      </div>
 
       {error && <Alert type="error" message={error} onClose={onReload} />}
 
       {loading ? (
-        <Spinner size="lg" />
+        <div className="flex justify-center py-16"><Spinner size="lg" /></div>
       ) : visible.length === 0 ? (
-        <div className="py-16 text-center text-gray-400">
-          <p className="text-4xl mb-3">🍽️</p>
-          <p>No hay productos disponibles en esta categoría.</p>
+        <div className="py-20 text-center text-gray-400">
+          <p className="text-5xl mb-4">🍽️</p>
+          <p className="font-medium">No hay productos en esta categoría.</p>
         </div>
       ) : (
-        /* Grid táctil: 2 cols en móvil, 3 en tablet, 4 en desktop */
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {visible.map((p) => (
-            <ProductCard key={p.id} producto={p} onAdd={onAdd} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {visible.map((p, i) => (
+            <ProductCard key={p.id} producto={p} onAdd={onAdd} colorIndex={i % CARD_COLORS.length} />
           ))}
         </div>
       )}
@@ -145,9 +127,11 @@ function SearchableGrid({ products, loading, error, onReload, onAdd }: GridProps
 function ProductCard({
   producto,
   onAdd,
+  colorIndex = 0,
 }: {
   producto: Producto;
   onAdd?: (p: Producto) => void;
+  colorIndex?: number;
 }) {
   const [pressed, setPressed] = useState(false);
 
@@ -155,35 +139,46 @@ function ProductCard({
     if (!onAdd) return;
     setPressed(true);
     onAdd(producto);
-    setTimeout(() => setPressed(false), 300);
+    setTimeout(() => setPressed(false), 400);
   };
 
   return (
     <button
       onClick={handlePress}
       disabled={!onAdd}
-      className={`flex flex-col items-center justify-between bg-white rounded-2xl shadow-sm
-        border-2 p-4 gap-2 w-full text-left transition-all select-none
-        ${pressed ? 'scale-95 border-brand-500 bg-brand-50' : 'border-transparent hover:border-brand-300 hover:shadow-md'}
-        ${!onAdd ? 'cursor-default' : 'cursor-pointer active:scale-95'}`}
+      className={`flex flex-col bg-white rounded-2xl shadow-sm overflow-hidden w-full text-left
+        transition-all duration-200 select-none border border-gray-100
+        ${pressed ? 'scale-95 shadow-lg ring-2 ring-primary-400' : 'hover:shadow-md hover:-translate-y-0.5'}
+        ${!onAdd ? 'cursor-default' : 'cursor-pointer'}`}
     >
-      {/* Emoji / ícono placeholder */}
-      <span className="text-4xl">🍽️</span>
-
-      <div className="w-full text-center">
-        <p className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
-          {producto.nombre}
-        </p>
-        <p className="text-xs text-gray-500 mt-0.5">{producto.categoria.nombre}</p>
+      {/* Banner de color */}
+      <div className={`bg-gradient-to-br ${CARD_COLORS[colorIndex]} h-20 flex items-center justify-center`}>
+        <span className="text-4xl drop-shadow">🍽️</span>
       </div>
 
-      <span className="mt-1 text-base font-bold text-brand-600">
-        ${Number(producto.precio).toFixed(2)}
-      </span>
+      {/* Contenido */}
+      <div className="p-3 flex flex-col gap-2 flex-1">
+        <div>
+          <p className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
+            {producto.nombre}
+          </p>
+          <span className="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">
+            {producto.categoria.nombre}
+          </span>
+        </div>
 
-      {onAdd && (
-        <span className="text-xs text-brand-500 font-medium">+ Agregar</span>
-      )}
+        <div className="flex items-center justify-between mt-auto pt-1 border-t border-gray-50">
+          <span className="text-base font-bold text-primary-700">
+            ${Math.round(Number(producto.precio)).toLocaleString('es-CO')}
+          </span>
+          {onAdd && (
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full transition-colors
+              ${pressed ? 'bg-success-500 text-white' : 'bg-primary-100 text-primary-700'}`}>
+              {pressed ? '✓' : '+ Agregar'}
+            </span>
+          )}
+        </div>
+      </div>
     </button>
   );
 }

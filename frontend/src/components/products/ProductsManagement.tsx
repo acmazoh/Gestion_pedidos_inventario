@@ -131,7 +131,7 @@ export function ProductsManagement() {
         <h1 className="text-2xl font-bold text-gray-900">Gestión de Productos</h1>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         >
           + Nuevo Producto
         </button>
@@ -168,7 +168,7 @@ export function ProductsManagement() {
                   <td className="px-4 py-3 font-medium text-gray-900">{p.nombre}</td>
                   <td className="px-4 py-3 text-gray-600">{p.categoria.nombre}</td>
                   <td className="px-4 py-3 text-gray-800">
-                    ${Number(p.precio).toFixed(2)}
+                    ${Math.round(Number(p.precio)).toLocaleString('es-CO')}
                   </td>
                   <td className="px-4 py-3">
                     <button
@@ -185,7 +185,7 @@ export function ProductsManagement() {
                   <td className="px-4 py-3 flex gap-2">
                     <button
                       onClick={() => openEdit(p)}
-                      className="text-brand-600 hover:text-brand-700 font-medium text-xs px-2 py-1 rounded border border-brand-200 hover:bg-brand-50 transition-colors"
+                      className="text-primary-600 hover:text-primary-700 font-medium text-xs px-2 py-1 rounded border border-primary-200 hover:bg-primary-50 transition-colors"
                     >
                       Editar
                     </button>
@@ -229,7 +229,7 @@ export function ProductsManagement() {
                   type="text"
                   value={form.nombre}
                   onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="Ej. Hamburguesa Clásica"
                 />
               </div>
@@ -242,7 +242,7 @@ export function ProductsManagement() {
                 <select
                   value={form.categoria_id}
                   onChange={(e) => setForm({ ...form, categoria_id: Number(e.target.value) })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">Seleccionar…</option>
                   {categories.map((c) => (
@@ -264,7 +264,7 @@ export function ProductsManagement() {
                     step="0.01"
                     value={form.precio}
                     onChange={(e) => setForm({ ...form, precio: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                     placeholder="0.00"
                   />
                 </div>
@@ -277,7 +277,7 @@ export function ProductsManagement() {
                   value={form.descripcion}
                   onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
                   rows={2}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
                   placeholder="Descripción corta del producto…"
                 />
               </div>
@@ -288,7 +288,7 @@ export function ProductsManagement() {
                   type="checkbox"
                   checked={form.disponible}
                   onChange={(e) => setForm({ ...form, disponible: e.target.checked })}
-                  className="w-4 h-4 accent-brand-600"
+                  className="w-4 h-4 accent-primary-600"
                 />
                 <span className="text-sm text-gray-700">Visible en el menú POS</span>
               </label>
@@ -304,7 +304,7 @@ export function ProductsManagement() {
                           type="checkbox"
                           checked={form.ingrediente_ids.includes(ing.id)}
                           onChange={() => handleIngredientToggle(ing.id)}
-                          className="accent-brand-600"
+                          className="accent-primary-600"
                         />
                         <span className="truncate">{ing.nombre}</span>
                         <span className="text-gray-400 text-xs">({ing.stock})</span>
@@ -326,7 +326,7 @@ export function ProductsManagement() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                  className="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
                 >
                   {saving ? 'Guardando…' : editingId ? 'Actualizar' : 'Crear Producto'}
                 </button>

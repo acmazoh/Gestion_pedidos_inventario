@@ -1,3 +1,40 @@
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from .models import Role
+from .serializers import RoleSerializer
+from django import forms
+
+# Formulario para Role
+class RoleForm(forms.ModelForm):
+    class Meta:
+        model = Role
+        fields = ['name', 'permissions']
+
+# Listar roles
+class RoleListView(ListView):
+    model = Role
+    template_name = 'users/role_list.html'
+    context_object_name = 'roles'
+
+# Crear rol
+class RoleCreateView(CreateView):
+    model = Role
+    form_class = RoleForm
+    template_name = 'users/role_form.html'
+    success_url = reverse_lazy('role_list')
+
+# Editar rol
+class RoleUpdateView(UpdateView):
+    model = Role
+    form_class = RoleForm
+    template_name = 'users/role_form.html'
+    success_url = reverse_lazy('role_list')
+
+# Eliminar rol
+class RoleDeleteView(DeleteView):
+    model = Role
+    template_name = 'users/role_confirm_delete.html'
+    success_url = reverse_lazy('role_list')
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response

@@ -45,11 +45,17 @@ class PedidoSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['estado', 'creado_por', 'fecha_creacion']
 
+
     def _subtotal_decimal(self, obj):
-        return sum(
-            Decimal(str(item.producto.precio)) * item.cantidad
-            for item in obj.items.select_related('producto')
-        )
+        # Solo sumar productos del pedido actual, evitando duplicados y errores
+        items = obj.items.select_related('producto').all()
+        subtotal = Decimal('0')
+        for item in items:
+            # Protección: solo sumar si cantidad y precio son válidos
+            cantidad = item.cantidad if item.cantidad > 0 else 0
+            precio = Decimal(str(item.producto.precio)) if item.producto and item.producto.precio else Decimal('0')
+            subtotal += precio * cantidad
+        return subtotal
 
     def get_subtotal(self, obj):
         return round(float(self._subtotal_decimal(obj)), 2)

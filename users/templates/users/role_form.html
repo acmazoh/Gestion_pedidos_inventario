@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{% if form.instance.pk %}Editar Rol{% else %}Crear Rol{% endif %}</h1>
+<form method="post">{% csrf_token %}
+    <label>Nombre: <input type="text" name="name" value="{{ form.name.value|default_if_none:'' }}" required></label><br>
+    <label>Permisos (JSON): <textarea name="permissions" required>{{ form.permissions.value|default_if_none:'{}' }}</textarea></label><br>
+    <button type="submit">Guardar</button>
+    <a href="{% url 'role_list' %}">Cancelar</a>
+</form>
+{% endblock %}

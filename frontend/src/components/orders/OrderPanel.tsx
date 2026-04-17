@@ -62,13 +62,13 @@ export function OrderPanel() {
               value={mesa}
               onChange={(e) => setMesa(e.target.value)}
               placeholder="Ej. Mesa 3"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
           <button
             type="submit"
             disabled={loading || !mesa.trim()}
-            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white py-2 rounded-lg font-medium transition-colors"
+            className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white py-2 rounded-lg font-medium transition-colors"
           >
             {loading ? 'Creando…' : 'Iniciar Orden'}
           </button>
@@ -91,7 +91,7 @@ export function OrderPanel() {
         </p>
         <button
           onClick={handleReset}
-          className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+          className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
         >
           Nueva Orden
         </button>
@@ -109,12 +109,18 @@ export function OrderPanel() {
           <h1 className="text-xl font-bold text-gray-900">
             Orden #{order.id}
           </h1>
-          <p className="text-sm text-gray-500">{order.mesa_o_online}</p>
+          <p className="text-sm text-gray-500">
+            Mesa/Cliente: {order.mesa_o_online}
+          </p>
+          <p className="text-xs text-gray-400">
+            Creada: {order.fecha_creacion ? new Date(order.fecha_creacion).toLocaleString() : ''}
+          </p>
         </div>
         <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${
-          order.estado === 'pendiente'
-            ? 'bg-yellow-100 text-yellow-700'
-            : 'bg-blue-100 text-blue-700'
+          order.estado === 'pendiente'  ? 'bg-yellow-100 text-yellow-700'
+            : order.estado === 'en_preparacion' ? 'bg-primary-100 text-primary-700'
+            : order.estado === 'listo'  ? 'bg-success-100 text-success-700'
+            : 'bg-gray-100 text-gray-600'
         }`}>
           {order.estado}
         </span>
@@ -173,7 +179,7 @@ export function OrderPanel() {
           <button
             onClick={() => setConfirmOpen(true)}
             disabled={loading || order.items.length === 0}
-            className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white py-2 rounded-lg text-sm font-medium transition-colors"
+            className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white py-2 rounded-lg text-sm font-medium transition-colors"
           >
             Confirmar Orden
           </button>
@@ -234,7 +240,7 @@ function OrderItemRow({ item, disabled, onUpdateQty, onRemove }: ItemRowProps) {
 
       {/* Subtotal */}
       <span className="w-16 text-right text-sm font-semibold text-gray-800">
-        ${item.subtotal.toFixed(2)}
+        ${Math.round(item.subtotal).toLocaleString('es-CO')}
       </span>
 
       {/* Eliminar */}
@@ -264,15 +270,15 @@ function OrderSummary({ subtotal, impuesto, total, taxLabel }: SummaryProps) {
     <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-2 text-sm">
       <div className="flex justify-between text-gray-600">
         <span>Subtotal</span>
-        <span>${subtotal.toFixed(2)}</span>
+        <span>${Math.round(subtotal).toLocaleString('es-CO')}</span>
       </div>
       <div className="flex justify-between text-gray-600">
         <span>{taxLabel}</span>
-        <span>${impuesto.toFixed(2)}</span>
+        <span>${Math.round(impuesto).toLocaleString('es-CO')}</span>
       </div>
       <div className="flex justify-between font-bold text-gray-900 text-base border-t pt-2 mt-1">
         <span>Total</span>
-        <span>${total.toFixed(2)}</span>
+        <span>${Math.round(total).toLocaleString('es-CO')}</span>
       </div>
     </div>
   );

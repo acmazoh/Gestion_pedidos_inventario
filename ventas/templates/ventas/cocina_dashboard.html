@@ -30,7 +30,20 @@
                 <td>{{ pedido.mesa_o_online }}</td>
                 <td>{{ pedido.fecha_creacion }}</td>
                 <td>{{ pedido.get_estado_display }}</td>
-                <td><a href="{% url 'pedido_detail' pedido.id %}">Ver detalles</a></td>
+                <td>
+                    <a href="{% url 'pedido_detail' pedido.id %}">Ver detalles</a>
+                    {% if pedido.estado == 'en_preparacion' %}
+                        <form method="post" action="{% url 'marcar_listo' pedido.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit">✔️ Marcar Listo</button>
+                        </form>
+                    {% elif pedido.estado == 'listo' %}
+                        <form method="post" action="{% url 'marcar_entregado' pedido.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit">📦 Marcar Entregado</button>
+                        </form>
+                    {% endif %}
+                </td>
             </tr>
             {% empty %}
             <tr>

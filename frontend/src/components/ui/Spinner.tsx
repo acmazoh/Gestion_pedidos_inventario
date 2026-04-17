@@ -4,7 +4,7 @@ export function Spinner({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   return (
     <div className="flex justify-center items-center py-6">
       <div
-        className={`${s} animate-spin rounded-full border-4 border-brand-500 border-t-transparent`}
+        className={`${s} animate-spin rounded-full border-4 border-primary-500 border-t-transparent`}
         role="status"
         aria-label="Cargando"
       />

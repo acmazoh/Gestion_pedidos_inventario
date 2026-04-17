@@ -1,6 +1,17 @@
+
+
 from django.db import models
 from django.contrib.auth.models import User
 from products.models import Producto
+
+# Historial de ventas
+class Transaccion(models.Model):
+    pedido = models.ForeignKey('Pedido', on_delete=models.CASCADE)
+    fecha = models.DateTimeField(auto_now_add=True)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"Venta de Pedido {self.pedido.id} - ${self.total} ({self.fecha:%d/%m/%Y %H:%M})"
 
 
 class Pedido(models.Model):
