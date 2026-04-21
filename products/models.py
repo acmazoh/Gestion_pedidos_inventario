@@ -25,11 +25,13 @@ class Ingrediente(models.Model):
 
 
 class Producto(models.Model):
+
     nombre = models.CharField(max_length=200)
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     descripcion = models.TextField(blank=True)
     ingredientes = models.ManyToManyField(Ingrediente)
+    disponible = models.BooleanField(default=True, help_text="¿El producto está activo para ventas?")
 
     def __str__(self):
         return self.nombre

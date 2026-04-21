@@ -73,10 +73,23 @@ class ProductoVentaListView(ListView):
     context_object_name = 'productos'
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        from django.db.models import F, OuterRef, Exists
+        from products.models import ProductoIngrediente
+
+        queryset = super().get_queryset().filter(disponible=True)
         categoria_id = self.request.GET.get('categoria')
         if categoria_id:
             queryset = queryset.filter(categoria_id=categoria_id)
+
+        # Solo productos con receta y todos los ingredientes con stock suficiente
+        queryset = queryset.filter(productoingrediente__isnull=False).distinct()
+        pi_sub = ProductoIngrediente.objects.filter(
+            producto=OuterRef('pk'),
+            ingrediente__stock__lt=F('cantidad')
+        )
+        queryset = queryset.annotate(
+            tiene_faltante=Exists(pi_sub)
+        ).filter(tiene_faltante=False)
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -272,22 +285,22 @@ class PedidoConfirmarView(LoginRequiredMixin, View):
 
 class PedidosActivosAPIView(LoginRequiredMixin, View):
     """API endpoint que retorna pedidos activos en JSON para actualizaci\u00f3n en tiempo real.
-    
+
     Responde con un JSON que contiene:
     - pedidos: lista de pedidos activos con sus detalles
     - timestamp: marca de tiempo para comparaci\u00f3n de actualizaci\u00f3n
     """
-    
+
     def get(self, request):
         # Pedidos en preparaci\u00f3n o listos
         pedidos = Pedido.objects.filter(
             estado__in=['en_preparacion', 'listo']
         ).order_by('fecha_creacion')
-        
+
         # \u00d9ltima actualizaci\u00f3n para detectar cambios (hace 5 segundos)
         last_update = request.GET.get('last_update')
         pedidos_json = []
-        
+
         for pedido in pedidos:
             items = []
             for item in pedido.items.select_related('producto'):
@@ -296,12 +309,12 @@ class PedidosActivosAPIView(LoginRequiredMixin, View):
                     'producto': item.producto.nombre,
                     'cantidad': item.cantidad,
                 })
-            
+
             # Detectar si es orden nueva (creada hace menos de 30 segundos)
             ahora = timezone.now()
             segundos_transcurridos = (ahora - pedido.fecha_creacion).total_seconds()
             es_nuevo = segundos_transcurridos < 30
-            
+
             pedidos_json.append({
                 'id': pedido.id,
                 'mesa_o_online': pedido.mesa_o_online,
@@ -312,7 +325,7 @@ class PedidosActivosAPIView(LoginRequiredMixin, View):
                 'es_nuevo': es_nuevo,
                 'total_items': len(items),
             })
-        
+
         return JsonResponse({
             'pedidos': pedidos_json,
             'timestamp': timezone.now().isoformat(),

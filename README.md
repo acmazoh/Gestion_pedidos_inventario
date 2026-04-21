@@ -1,3 +1,89 @@
+## RF-03: Crear Nueva Orden en POS
+
+Permite crear una nueva orden desde el POS, asociada a una mesa o identificador online, registrando el timestamp automáticamente.
+
+#### Cómo crear una orden (paso a paso)
+1. Ingresa a la vista POS y haz clic en "Nueva Orden".
+2. Selecciona la mesa o ingresa el identificador online.
+3. Agrega productos y cantidades.
+4. Haz clic en "Crear Orden".
+5. El sistema crea la orden y la muestra en la lista de pedidos y en cocina.
+
+#### Ejemplo de petición al endpoint (Thunder Client/Postman)
+
+POST http://localhost:8000/ventas/api/orders/create/
+
+Headers:
+- Authorization: Bearer TU_TOKEN
+- Content-Type: application/json
+
+Body:
+```json
+{
+  "mesa_o_online": "Mesa 5",
+  "productos": [
+    {"producto": 1, "cantidad": 2},
+    {"producto": 5, "cantidad": 1}
+  ]
+}
+```
+
+#### Ejemplo de respuesta
+```json
+{
+  "id": 18,
+  "mesa_o_online": "Mesa 5",
+  "fecha_creacion": "2026-04-21T22:47:53.564517Z",
+  "productos": [
+    {"producto": "Hamburguesa Sencilla", "cantidad": 2},
+    {"producto": "Coca Cola 400ml", "cantidad": 1}
+  ]
+}
+```
+
+#### Validaciones
+- No se permite crear órdenes vacías (sin productos).
+- Solo usuarios autenticados pueden crear órdenes.
+- El timestamp se registra automáticamente.
+- El pedido puede modificarse antes de confirmar.
+
+#### Pruebas manuales
+- Crear 3 órdenes diferentes y verificar que aparecen en la BD y en el frontend.
+
+### ¿Cómo crear una orden paso a paso?
+1. Ingresa a la vista POS y haz clic en "Nueva Orden".
+2. Selecciona la mesa o ingresa el identificador online del cliente.
+3. Haz clic en "Crear Orden".
+4. El sistema crea la orden y te redirige al detalle para agregar productos.
+5. Agrega productos y cantidades a la orden antes de confirmarla.
+6. Solo puedes confirmar la orden si tiene al menos un producto.
+
+### Validaciones y mensajes
+- Solo usuarios autenticados pueden crear órdenes.
+- No se permite confirmar órdenes vacías (sin productos).
+- El sistema muestra mensajes de éxito y error en cada paso.
+
+### Estructura de datos de la orden
+Ejemplo de una orden en la base de datos:
+```json
+{
+  "id": 1,
+  "mesa_o_online": "Mesa 5",
+  "estado": "pendiente",
+  "creado_por": "mesero1",
+  "fecha_creacion": "2026-04-21T15:30:00Z",
+  "productos": [
+    { "id": 2, "nombre": "Hamburguesa Sencilla", "cantidad": 2 },
+    { "id": 5, "nombre": "Coca Cola 400ml", "cantidad": 1 }
+  ]
+}
+```
+
+### Notas técnicas
+- El timestamp se registra automáticamente.
+- El flujo es intuitivo y no requiere capacitación especial.
+- Puedes modificar la orden antes de confirmarla.
+- Prueba manual: crea 3 órdenes diferentes y verifica en la BD.
 # Sistema de Gestión de Pedidos e Inventario
 
 Sistema web para restaurantes que permite tomar pedidos, controlar inventario y gestionar el flujo completo desde la mesa hasta el pago.
@@ -188,6 +274,181 @@ La vista de cocina proporciona una interfaz en tiempo real para que el personal 
 8. **Optimización**: La actualización se pausa cuando la pestaña no está activa para ahorrar recursos.
 
 
+
+---
+
+## RF-01: Gestión de Productos del Menú
+
+**Asignado a:** Andrés Camilo Mazo (acmazoh)
+**Sprint:** 1
+**Prioridad:** Alta
+
+### Descripción
+Permite a un administrador crear, actualizar y eliminar productos del menú, incluyendo nombre, categoría, precio, descripción e ingredientes asociados.
+
+### Endpoints principales
+
+- `POST /api/products/` — Crear producto
+- `PUT /api/products/{id}/` — Actualizar producto
+- `DELETE /api/products/{id}/` — Eliminar producto
+
+#### Ejemplo: Crear producto
+
+```http
+POST /api/products/
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "nombre": "Pizza Margarita",
+  "categoria_id": 1,
+  "precio": 25000,
+  "descripcion": "Pizza clásica con tomate y queso",
+  "ingrediente_ids": [1, 2, 3]
+}
+```
+
+#### Ejemplo de respuesta exitosa
+
+```json
+{
+  "id": 5,
+  "nombre": "Pizza Margarita",
+  "categoria": { "id": 1, "nombre": "Pizzas" },
+  "precio": "25000.00",
+  "descripcion": "Pizza clásica con tomate y queso",
+  "disponible": true,
+  "ingredientes": [
+    { "id": 1, "nombre": "Queso" },
+    { "id": 2, "nombre": "Tomate" }
+  ]
+}
+```
+
+#### Validaciones y errores
+- Nombre único: `{"nombre": ["Ya existe un producto con este nombre."]}`
+- Precio mayor a 0: `{"precio": ["El precio debe ser mayor a 0."]}`
+
+### Pruebas manuales sugeridas
+- Crear 3 productos distintos
+- Editar 2 productos
+- Eliminar 1 producto
+- Verificar asociación de ingredientes
+
+### Notas técnicas
+- El modelo y los endpoints están optimizados con `select_related` y `prefetch_related`.
+- Los errores se devuelven en formato JSON con mensajes claros.
+- Ver código en `products/api_views.py` y `products/serializers.py` para detalles de validaciones y lógica.
+
+---
+
+
+## Autenticación de usuario vía JWT (API)
+
+Para consumir los endpoints protegidos de la API, primero debes autenticarte y obtener un token JWT.
+
+### 1. Obtener token JWT
+
+Realiza una petición POST a:
+
+```
+POST /api/token/
+Content-Type: application/json
+
+{
+  "username": "TU_USUARIO",
+  "password": "TU_CONTRASEÑA"
+}
+```
+
+Respuesta:
+```
+{
+  "refresh": "...",
+  "access": "..."
+}
+```
+
+### 2. Usar el token en tus peticiones
+
+Agrega el header:
+```
+Authorization: Bearer <access_token>
+```
+
+### 3. Renovar el access token (cuando expire)
+
+```
+POST /api/token/refresh/
+Content-Type: application/json
+
+{
+  "refresh": "<refresh_token>"
+}
+```
+
+Obtendrás un nuevo `access` token para seguir autenticado.
+
+---
+
+## RF-02: Visualizar Productos Disponibles en POS
+
+**Asignado a:** Andrés Camilo Mazo (acmazoh)
+**Sprint:** 1
+**Prioridad:** Alta
+
+### Descripción
+Permite mostrar en la interfaz POS solo los productos activos y con ingredientes disponibles en inventario.
+
+### Endpoint principal
+
+- `GET /api/products/?disponible=true` — Lista productos activos y con stock suficiente
+
+#### Ejemplo de petición
+```http
+GET /api/products/?disponible=true
+Authorization: Bearer <token>
+```
+
+#### Ejemplo de respuesta
+```json
+[
+  {
+    "id": 1,
+    "nombre": "Pizza Margarita",
+    "categoria": { "id": 1, "nombre": "Pizzas" },
+    "precio": "25000.00",
+    "descripcion": "Pizza clásica con tomate y queso",
+    "disponible": true
+  },
+  ...
+]
+```
+
+#### Notas
+- Solo aparecen productos con disponible=True y cuyos ingredientes tienen stock suficiente según la receta (ProductoIngrediente).
+- Ordenados por categoría y nombre.
+- Si un producto no aparece, revisa el stock de sus ingredientes y la cantidad requerida en la receta.
+
+#### Visualización en POS
+- Si no hay productos disponibles, la vista muestra el mensaje: "No hay productos disponibles en esta categoría." (se evidencia el filtrado en frontend y backend).
+- El frontend ahora depende 100% del filtrado del backend.
+
+#### Validación multiplataforma
+- Probar en Chrome, Firefox y Edge.
+- Probar en tablet o modo responsivo del navegador.
+
+#### Validaciones y errores
+- Si no hay productos disponibles: retorna lista vacía `[]`.
+- Si el token es inválido: error 401.
+
+### Pruebas manuales sugeridas
+- Crear productos con ingredientes en stock y sin stock, verificar que solo aparecen los que cumplen la condición.
+- Probar con más de 20 productos.
+
+### Notas técnicas
+- Consulta optimizada con `select_related` y `prefetch_related`.
+- Lógica de filtrado en `products/api_views.py`.
 
 ---
 
