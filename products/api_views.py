@@ -25,6 +25,18 @@ class ProductoViewSet(viewsets.ModelViewSet):
         categoria_id = self.request.query_params.get('categoria')
         if categoria_id:
             qs = qs.filter(categoria_id=categoria_id)
+
+        # Filtro productos cuyos ingredientes tienen stock suficiente (>0)
+        # Solo aplica si se pide productos disponibles (catálogo POS)
+        if disponible and disponible.lower() == 'true':
+            productos_con_stock = []
+            for producto in qs:
+                ingredientes = producto.ingredientes.all()
+                # Si algún ingrediente tiene stock <= 0, el producto no está disponible
+                if all(ing.stock > 0 for ing in ingredientes):
+                    productos_con_stock.append(producto.id)
+            qs = qs.filter(id__in=productos_con_stock)
+
         return qs
 
     @action(detail=True, methods=['post'], url_path='toggle-disponible')
