@@ -113,8 +113,8 @@ Authorization: Bearer <token>
 
 ## RF-02: Visualizar Productos Disponibles en POS
 
-**Asignado a:** Andrés Camilo Mazo (acmazoh)  
-**Sprint:** 1  
+**Asignado a:** Andrés Camilo Mazo (acmazoh)
+**Sprint:** 1
 **Prioridad:** Alta
 
 ### Descripción
