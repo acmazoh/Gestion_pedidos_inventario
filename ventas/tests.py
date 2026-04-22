@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.core.cache import cache
 from products.models import Ingrediente, Producto, Categoria, ProductoIngrediente, MovimientoInventario
 from .models import Pedido, PedidoProducto, Transaccion
-
+from rest_framework.test import APITestCase
 
 def crear_escenario_base():
     """Crea un set de objetos reutilizable para los tests de RF-10."""
@@ -414,3 +414,47 @@ class ConfirmarOrdenTest(TestCase):
         self.client.post(reverse('pedido_confirm', args=[self.pedido.pk]))
         self.pedido.refresh_from_db()
         self.assertEqual(self.pedido.estado, 'pendiente')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RF-11: API de Ventas
+# ─────────────────────────────────────────────────────────────────────────────
+
+class RegistrarVentaAPITest(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user('apiuser', 'api@test.com', 'pass123')
+        self.client.login(username='apiuser', password='pass123')
+        categoria = Categoria.objects.create(nombre='Bebidas')
+        self.producto = Producto.objects.create(nombre='Jugo', categoria=categoria, precio=5000)
+        self.pedido = Pedido.objects.create(mesa_o_online='Mesa API', creado_por=self.user, estado='listo')
+        PedidoProducto.objects.create(pedido=self.pedido, producto=self.producto, cantidad=3)
+
+    def test_post_register_crea_transaccion(self):
+        url = '/ventas/api/sales/register/'
+        resp = self.client.post(url, {'pedido_id': self.pedido.id}, format='json')
+        self.assertEqual(resp.status_code, 201)
+        self.assertTrue(Transaccion.objects.filter(pedido=self.pedido).exists())
+        t = Transaccion.objects.get(pedido=self.pedido)
+        self.assertEqual(t.total, self.producto.precio * 3)
+
+    def test_post_register_sin_pedido_id(self):
+        url = '/ventas/api/sales/register/'
+        resp = self.client.post(url, {}, format='json')
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('error', getattr(resp, 'data', {}))
+
+    def test_post_register_pedido_no_existe(self):
+        url = '/ventas/api/sales/register/'
+        resp = self.client.post(url, {'pedido_id': 9999}, format='json')
+        self.assertEqual(resp.status_code, 404)
+        self.assertIn('error', getattr(resp, 'data', {}))
+
+    def test_post_register_no_duplicar_transaccion(self):
+        url = '/ventas/api/sales/register/'
+        # Primer registro
+        resp1 = self.client.post(url, {'pedido_id': self.pedido.id}, format='json')
+        self.assertEqual(resp1.status_code, 201)
+        # Segundo intento (debería fallar)
+        resp2 = self.client.post(url, {'pedido_id': self.pedido.id}, format='json')
+        self.assertEqual(resp2.status_code, 400)
+        self.assertIn('ya existe', getattr(resp2, 'data', {}).get('error', ''))

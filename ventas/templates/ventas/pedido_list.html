@@ -22,8 +22,9 @@
 </head>
 <body>
     <nav>
-        <a href="{% url 'pedido_create' %}">➕ Nueva Orden</a> |
-        <a href="{% url 'venta_list' %}">Productos</a> |
+        <a href="/ventas/" style="color:#2196F3; font-weight:bold; text-decoration:none;">Ventas</a> |
+        <a href="/products/" style="color:#2196F3; font-weight:bold; text-decoration:none;">Productos</a> |
+        <a href="{% url 'pedido_create' %}">Nueva Orden</a> |
         <a href="{% url 'cocina_dashboard' %}">Cocina</a>
         <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
             {% csrf_token %}

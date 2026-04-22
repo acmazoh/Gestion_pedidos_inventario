@@ -1,3 +1,92 @@
+## RF-10: Descuento Automático de Inventario al Confirmar Orden
+
+Cuando una orden es confirmada (desde el POS), el sistema descuenta automáticamente del inventario las cantidades de ingredientes usados en los productos de la orden, según las recetas definidas.
+
+### ¿Cómo funciona?
+- Al confirmar una orden, el backend recorre todos los productos y sus cantidades.
+- Para cada producto, consulta su receta (`ProductoIngrediente`) y descuenta el stock de cada ingrediente involucrado.
+- Si falta stock de algún ingrediente, la orden NO se confirma y se muestra un mensaje claro (ver RF-07).
+- Cada descuento queda registrado en el historial de movimientos de inventario (`MovimientoInventario`), con fecha, cantidad, stock resultante y pedido asociado.
+
+### ¿Cómo lo veo en el sistema?
+- Ve a **Productos → Ingredientes** (`/products/ingredientes/`) para ver el stock actualizado tras confirmar una orden.
+- Ingredientes con stock bajo (≤ 5) aparecen resaltados y con etiqueta "Stock bajo".
+- Haz clic en **Movimientos** para ver el historial detallado de entradas y salidas de inventario.
+
+### Pruebas recomendadas
+1. Confirma una orden y verifica que el stock de ingredientes se descuenta correctamente.
+2. Si el stock de algún ingrediente queda bajo, la alerta visual aparece en la tabla.
+3. Consulta el historial de movimientos para ver el registro del descuento.
+
+### Comentarios técnicos
+- El flujo está cubierto por pruebas automáticas en `ventas/tests.py`.
+- El frontend de inventario y movimientos es solo visual y no afecta otros módulos.
+
+---
+## RF-09: Actualizar Estado de Orden (Cocina) — Control de Permisos y Feedback Visual
+
+En la vista de cocina (`/ventas/cocina/`), solo los usuarios con rol **cocina** o **admin** pueden ver y utilizar los botones para cambiar el estado de los pedidos ("Listo" y "Entregada").
+
+### ¿Cómo funciona?
+- El backend expone el rol del usuario autenticado al template.
+- El frontend (JS en `cocina_dashboard.html`) solo muestra los botones de cambio de estado si el usuario tiene rol `kitchen` o `admin`.
+- Si un usuario sin permisos intenta manipular el DOM o forzar el envío del formulario, el JS bloquea la acción y muestra una notificación: "No tienes permiso para cambiar el estado de la orden.".
+- El backend también valida los permisos antes de procesar el cambio de estado (seguridad total).
+
+### Pruebas recomendadas
+1. Iniciar sesión como usuario con rol **cocina** o **admin**: los botones aparecen y funcionan.
+2. Iniciar sesión como otro rol (mesero, cajero): los botones NO aparecen.
+3. Intentar manipular el DOM para enviar el formulario: aparece notificación de error y no se envía.
+4. Revisar que el backend rechaza cambios de estado si el usuario no tiene permisos (ver logs o respuesta HTTP).
+
+### Comentarios técnicos
+- El control de visibilidad y feedback visual está implementado en el JS del template `cocina_dashboard.html`.
+- El backend valida el rol antes de procesar cambios de estado para máxima seguridad.
+
+---
+## RF-08: Vista de Cocina en Tiempo Real
+
+Permite al personal de cocina visualizar en tiempo real todas las órdenes confirmadas y pendientes de preparación, con una interfaz optimizada para tablets y dispositivos de cocina.
+
+### ¿Cómo funciona?
+- Cuando una orden es confirmada en el POS, aparece automáticamente en la vista de cocina en menos de 2 segundos.
+- La vista de cocina se actualiza en tiempo real mediante AJAX polling (cada 3 segundos) y puede soportar WebSocket si está habilitado.
+- Cada orden se muestra como una tarjeta con:
+  - Número de orden
+  - Mesa o cliente
+  - Hora de creación
+  - Lista de productos y cantidades
+  - Estado visual (en preparación, listo, entregada)
+  - Botones para marcar como "Listo" o "Entregada"
+- Las órdenes nuevas se resaltan con color y animación.
+- El diseño es responsivo, con texto grande y alto contraste, ideal para tablets.
+
+### Endpoints y lógica
+- `GET /api/orders/kitchen/` — Devuelve todas las órdenes en estado "en_preparacion" o "listo".
+- El frontend consulta este endpoint periódicamente y actualiza la vista automáticamente.
+- El backend soporta tanto polling como WebSocket para notificaciones en tiempo real.
+
+### Ejemplo de uso
+1. Confirma una orden desde el POS.
+2. En la vista de cocina (`/ventas/cocina/`), la nueva orden aparece automáticamente.
+3. El cocinero puede marcar la orden como "Listo" o "Entregada" desde la misma interfaz.
+
+### Diseño y usabilidad
+- Interfaz clara, sin necesidad de capacitación.
+- Tarjetas grandes, colores diferenciados por estado.
+- Indicador visual de órdenes nuevas.
+- Adaptable a pantallas de tablet y escritorio.
+
+### Pruebas recomendadas
+1. Confirmar una orden y verificar que aparece en cocina en <2 segundos.
+2. Confirmar varias órdenes seguidas y verificar que todas aparecen.
+3. Probar la vista en un dispositivo tablet o simulador de pantalla pequeña.
+
+### Comentarios técnicos
+- El código de actualización automática está comentado en la plantilla `cocina_dashboard.html`.
+- El endpoint de backend está documentado en `ventas/api_views.py` y `ventas/consumers.py`.
+
+---
 ## RF-03: Crear Nueva Orden en POS
 
 Permite crear una nueva orden desde el POS, asociada a una mesa o identificador online, registrando el timestamp automáticamente.
@@ -200,19 +289,37 @@ Cada descuento queda registrado en `MovimientoInventario` con:
 
 El historial es visible en `/products/ingredientes/movimientos/`.
 
-### Errores al confirmar una orden (RF-10)
 
-Si al confirmar una orden falta stock de algún ingrediente, el sistema **no confirma** la orden y muestra una alerta por cada ingrediente con problema:
+## RF-07: Validar Stock al Confirmar Orden
 
-| Campo mostrado | Descripción |
-|----------------|-------------|
-| Ingrediente | Nombre del ingrediente sin stock suficiente |
-| Requerido | Cantidad total necesaria para cubrir el pedido |
-| Disponible | Stock actual en inventario |
-| Faltante | Diferencia entre requerido y disponible |
-| Productos | Qué productos del pedido usan ese ingrediente |
+Cuando se intenta confirmar una orden, el sistema valida automáticamente el stock de todos los ingredientes requeridos para los productos de la orden.
 
-La orden permanece en estado `pendiente` y el stock **no se modifica** hasta que haya suficiente inventario.
+- Si hay suficiente stock de todos los ingredientes, la orden se confirma y el inventario se descuenta.
+- Si falta stock de algún ingrediente, la orden NO se confirma. El sistema muestra un mensaje de error claro, indicando:
+  - Qué ingrediente está insuficiente
+  - Para qué producto(s) es necesario
+  - Cuánto hay disponible y cuánto se necesita
+
+### Ejemplo de mensaje de error
+
+> No se puede confirmar: stock insuficiente
+> - Ingrediente: Queso (productos: Pizza Margarita): necesita 200, disponible 150 — faltan 50
+> - Ingrediente: Tomate (productos: Pizza Margarita, Ensalada): necesita 100, disponible 0 — faltan 100
+
+### ¿Qué puede hacer el usuario?
+- El usuario puede quitar productos afectados de la orden y volver a intentar.
+- No es posible confirmar la orden mientras haya faltantes.
+
+### Comentarios técnicos
+- La validación de stock se realiza en el backend antes de confirmar la orden.
+- El código está comentado en la función de validación para facilitar el mantenimiento.
+
+### Pruebas recomendadas
+1. Orden con stock suficiente: se confirma correctamente.
+2. Orden con un producto sin stock: no se confirma, mensaje correcto.
+3. Orden con varios ingredientes faltantes: mensaje múltiple, no se confirma.
+
+---
 
 ---
 
@@ -449,6 +556,139 @@ Authorization: Bearer <token>
 ### Notas técnicas
 - Consulta optimizada con `select_related` y `prefetch_related`.
 - Lógica de filtrado en `products/api_views.py`.
+
+---
+
+## RF-04: Modificar Orden Activa
+
+Permite modificar una orden en estado pendiente: agregar, eliminar o actualizar productos y cantidades.
+
+#### Cómo modificar una orden (paso a paso)
+1. Ingresa al detalle de la orden desde la lista de pedidos.
+2. Usa los botones + / - para cambiar la cantidad de cada producto.
+3. Usa el botón de eliminar para quitar un producto de la orden.
+4. Usa el buscador para agregar nuevos productos.
+5. Haz clic en "Guardar" para aplicar los cambios.
+6. Si eliminas el último producto, la orden se elimina automáticamente.
+7. No puedes modificar una orden confirmada.
+
+#### Endpoints disponibles
+- **Agregar producto:**
+  - POST `/ventas/api/orders/{id}/add-item/`
+  - Body: `{ "producto_id": 1, "cantidad": 2 }`
+- **Actualizar cantidad:**
+  - PATCH `/ventas/api/orders/{id}/items/{item_id}/quantity/`
+  - Body: `{ "cantidad": 3 }`
+- **Eliminar producto:**
+  - DELETE `/ventas/api/orders/{id}/items/{item_id}/`
+
+#### Ejemplo de respuesta al eliminar el último producto
+```json
+{
+  "error": "La orden ha sido eliminada porque no puede quedar vacía."
+}
+```
+
+#### Validaciones
+- Solo se pueden modificar órdenes en estado pendiente.
+- No puede quedar una orden vacía; si ocurre, se elimina.
+- Errores claros y mensajes visibles en frontend.
+
+#### Pruebas manuales
+- Modificar una orden 5 veces: agregar, quitar, cambiar cantidades y verificar en la BD y frontend.
+
+---
+
+## RF-05: Confirmar Orden y Enviar a Cocina
+
+Permite confirmar una orden pendiente, descontar inventario y enviarla a la vista de cocina.
+
+#### Cómo confirmar una orden (paso a paso)
+1. Ingresa al detalle de la orden desde la lista de pedidos.
+2. Revisa el resumen de productos y total.
+3. Haz clic en el botón "Confirmar Orden y Enviar a Cocina".
+4. El sistema solicita confirmación (diálogo/modal).
+5. Si confirmas, la orden cambia a estado "en_preparacion" y ya no puede modificarse.
+6. La orden aparece en la vista de cocina y el inventario se descuenta automáticamente.
+
+#### Endpoint disponible
+- **Confirmar orden:**
+  - POST `/ventas/api/orders/{id}/confirm/`
+  - Solo para órdenes en estado pendiente y con al menos un producto.
+
+#### Ejemplo de respuesta exitosa
+```json
+{
+  "id": 18,
+  "estado": "en_preparacion",
+  "mensaje": "Orden confirmada y enviada a cocina."
+}
+```
+
+#### Ejemplo de error (orden vacía)
+```json
+{
+  "error": "El pedido no tiene productos."
+}
+```
+
+#### Estados de la orden
+- **pendiente**: editable, aún no confirmada
+- **en_preparacion**: confirmada, enviada a cocina, ya no editable
+- **listo**: cocina terminó
+- **entregada**: entregada al cliente
+
+#### Validaciones
+- Solo usuarios autenticados pueden confirmar.
+- No se puede confirmar una orden vacía.
+- No se puede confirmar una orden ya confirmada.
+- Si no hay stock suficiente, muestra error y no descuenta inventario.
+
+#### Pruebas manuales
+- Confirmar 3 órdenes diferentes y verificar que aparecen en la vista de cocina y el inventario se descuenta correctamente.
+
+---
+
+## RF-06: Calcular Total de Orden con Impuestos
+
+Permite calcular el total de una orden sumando (precio × cantidad) de cada producto y aplicando el impuesto configurado.
+
+#### Cómo se calcula el total
+- **Subtotal:** Suma de (precio × cantidad) de todos los productos.
+- **Impuesto:** Subtotal × tasa de impuesto (`TAX_RATE`, por defecto 19%).
+- **Total:** Subtotal + impuesto.
+- **Fórmula:**
+  - `total = subtotal + (subtotal × TAX_RATE)`
+  - Ejemplo: Si subtotal = $10.000 y TAX_RATE = 0.19, entonces total = $11.900
+
+#### Endpoint disponible
+- **Calcular total:**
+  - GET `/ventas/api/orders/{id}/calculate-total/`
+  - Devuelve desglose de productos, subtotal, impuesto y total.
+
+#### Ejemplo de respuesta
+```json
+{
+  "id": 18,
+  "productos": [
+    {"producto": "Hamburguesa Sencilla", "cantidad": 2, "precio": 5000, "subtotal": 10000},
+    {"producto": "Coca Cola 400ml", "cantidad": 1, "precio": 1900, "subtotal": 1900}
+  ],
+  "subtotal": 11900,
+  "impuesto": 2261,
+  "total": 14161
+}
+```
+
+#### Tasa de impuesto
+- Configurada en `settings.py` como `TAX_RATE` (por defecto 0.19 = 19%).
+
+#### Validaciones
+- Si la orden no existe o está vacía, devuelve error.
+- El cálculo es rápido (<1s) y preciso con decimales.
+
+#### Pruebas manuales
+- Calcular total con 5 productos diferentes y verificar el desglose y el total en la web.
 
 ---
 

@@ -437,7 +437,8 @@
         <!-- NAVIGATION -->
         <nav>
             <a href="{% url 'pedido_list' %}">📋 Pedidos</a>
-            <a href="{% url 'venta_list' %}">📦 Productos</a>
+            <a href="{% url 'pedido_create' %}">📝 Nueva Orden</a>
+            <a href="{% url 'cocina_dashboard' %}">🍳 Cocina</a>
             <a href="{% url 'historial_ventas' %}">📊 Historial</a>
         </nav>
 
@@ -459,7 +460,9 @@
         const UPDATE_INTERVAL = 3000; // 3 segundos
         const NOTIFICATION_DURATION = 3000; // 3 segundos
         const RECENT_HIGHLIGHT_DURATION = 7000; // 7 segundos
-        
+        // Inyectar el rol del usuario autenticado desde Django
+        const USER_ROLE = "{{ user_role|default:'' }}";
+
         let lastPedidoIds = new Set();
         let updateTimer = null;
         let highlightedRecentOrderId = null;
@@ -522,20 +525,23 @@
             }
 
             let botonesHTML = '';
-            if (pedido.estado === 'en_preparacion') {
-                botonesHTML = `
-                    <form method="post" action="/ventas/pedidos/${pedido.id}/listo/" style="display: flex; width: 100%;">
-                        <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
-                        <button type="submit" class="btn btn-success">Listo</button>
-                    </form>
-                `;
-            } else if (pedido.estado === 'listo') {
-                botonesHTML = `
-                    <form method="post" action="/ventas/pedidos/${pedido.id}/entregada/" style="display: flex; width: 100%;">
-                        <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
-                        <button type="submit" class="btn btn-warning">Entregada</button>
-                    </form>
-                `;
+            // Solo mostrar botones si el usuario es cocina o admin
+            if (USER_ROLE === 'kitchen' || USER_ROLE === 'admin') {
+                if (pedido.estado === 'en_preparacion') {
+                    botonesHTML = `
+                        <form method="post" action="/ventas/pedidos/${pedido.id}/listo/" style="display: flex; width: 100%;">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
+                            <button type="submit" class="btn btn-success">Listo</button>
+                        </form>
+                    `;
+                } else if (pedido.estado === 'listo') {
+                    botonesHTML = `
+                        <form method="post" action="/ventas/pedidos/${pedido.id}/entregada/" style="display: flex; width: 100%;">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
+                            <button type="submit" class="btn btn-warning">Entregada</button>
+                        </form>
+                    `;
+                }
             }
 
             return `
@@ -672,22 +678,29 @@
 
         // ── EVENTOS ──
 
-        // Confirmación antes de marcar como entregada
+        // Confirmación y control de permisos antes de marcar como entregada o listo
         document.addEventListener('submit', function(e) {
             const submitButton = e.submitter;
-            if (submitButton && submitButton.classList.contains('btn-warning')) {
-                // Obtener el ID del pedido desde la URL del formulario
-                const formAction = e.target.action;
-                const pedidoId = formAction.match(/\/pedidos\/(\d+)\//)?.[1];
-
-                const mensaje = pedidoId
-                    ? `¿Estás seguro de marcar el pedido #${pedidoId} como entregado?`
-                    : '¿Estás seguro de marcar este pedido como entregado?';
-
-                const confirmed = confirm(mensaje);
-                if (!confirmed) {
+            // Solo controlar formularios de cambio de estado
+            if (submitButton && (submitButton.classList.contains('btn-warning') || submitButton.classList.contains('btn-success'))) {
+                // Si el usuario no es cocina ni admin, bloquear y notificar
+                if (!(USER_ROLE === 'kitchen' || USER_ROLE === 'admin')) {
                     e.preventDefault();
+                    mostrarNotificacion('No tienes permiso para cambiar el estado de la orden.');
                     return false;
+                }
+                // Confirmación para "entregada"
+                if (submitButton.classList.contains('btn-warning')) {
+                    const formAction = e.target.action;
+                    const pedidoId = formAction.match(/\/pedidos\/(\d+)\//)?.[1];
+                    const mensaje = pedidoId
+                        ? `¿Estás seguro de marcar el pedido #${pedidoId} como entregado?`
+                        : '¿Estás seguro de marcar este pedido como entregado?';
+                    const confirmed = confirm(mensaje);
+                    if (!confirmed) {
+                        e.preventDefault();
+                        return false;
+                    }
                 }
             }
         });

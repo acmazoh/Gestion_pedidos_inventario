@@ -1,3 +1,4 @@
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -86,9 +87,9 @@
             {% for item in items %}
             <tr data-subtotal="{{ item.subtotal }}">
                 <td>{{ item.producto.nombre }}</td>
-                <td>${{ item.producto.precio }}</td>
+                <td>${{ item.producto.precio|intcomma }}</td>
                 <td class="item-qty">{{ item.cantidad }}</td>
-                <td class="item-subtotal">${{ item.subtotal }}</td>
+                <td class="item-subtotal">${{ item.subtotal|intcomma }}</td>
                 {% if pedido.estado == 'pendiente' %}
                 <td>
                     <form method="post" action="{% url 'pedido_item_increment' pedido.id item.id %}" style="display:inline;">
@@ -117,8 +118,22 @@
         </tbody>
     </table>
 
-    <div id="total-display">
-        Total: $<span id="total-value">{{ total }}</span>
+
+    <div id="total-display" style="margin-top:18px;">
+        <table style="font-size:16px;"> <!-- igual que celdas de productos -->
+            <tr>
+                <td style="font-weight:bold; color:#1565C0;">Subtotal:</td>
+                <td style="text-align:right; color:#000; font-weight:normal;">${{ subtotal|intcomma }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight:bold; color:#1565C0;">Impuesto ({{ tax_rate|floatformat:0 }}%):</td>
+                <td style="text-align:right; color:#000; font-weight:normal;">${{ impuesto|intcomma }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight:bold; color:#1565C0;">Total:</td>
+                <td style="text-align:right; color:#000; font-weight:bold;">${{ total|intcomma }}</td>
+            </tr>
+        </table>
     </div>
 
             {% if pedido.estado == 'pendiente' %}

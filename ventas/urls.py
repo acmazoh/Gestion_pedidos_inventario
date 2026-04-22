@@ -1,5 +1,6 @@
+
 from .api_views import PedidoCreateAPIView
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -27,4 +28,7 @@ urlpatterns = [
     # Historial de ventas (RF-11)
     path('ventas/historial/', views.HistorialVentasView.as_view(), name='historial_ventas'),
     path('ventas/historial/exportar/', views.ExportarHistorialCSVView.as_view(), name='historial_ventas_csv'),
+
+    # API REST endpoints
+    path('api/', include('ventas.api_urls')),
 ]

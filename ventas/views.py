@@ -125,8 +125,8 @@ class PedidoListView(LoginRequiredMixin, ListView):
     context_object_name = 'pedidos'
 
     def get_queryset(self):
-        # Mostrar todos los pedidos para operación compartida del POS.
-        return super().get_queryset().order_by('-fecha_creacion')
+        # Mostrar solo los pedidos del usuario autenticado
+        return Pedido.objects.filter(creado_por=self.request.user).order_by('-fecha_creacion')
 
 
 class PedidoDetailView(LoginRequiredMixin, ListView):
@@ -135,20 +135,32 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
     context_object_name = 'items'
 
     def get(self, request, pk, *args, **kwargs):
+        from decimal import Decimal, ROUND_HALF_UP
+        from django.conf import settings
         pedido = get_object_or_404(Pedido, pk=pk)
         form = PedidoProductoForm()
         items = list(pedido.items.select_related('producto'))
         for item in items:
             item.subtotal = item.producto.precio * item.cantidad
-        total = sum(item.subtotal for item in items)
+        subtotal = sum(item.subtotal for item in items)
+        tax_rate = Decimal(str(getattr(settings, 'TAX_RATE', 0.19)))
+        impuesto = (Decimal(subtotal) * tax_rate).quantize(Decimal('1.'), rounding=ROUND_HALF_UP)
+        total = Decimal(subtotal) + impuesto
+        # Para mostrar el porcentaje de impuesto en la plantilla
+        tax_rate_percent = (tax_rate * 100).quantize(Decimal('1.'), rounding=ROUND_HALF_UP)
         return render(request, self.template_name, {
             'pedido': pedido,
             'form': form,
             'items': items,
+            'subtotal': subtotal,
+            'impuesto': impuesto,
             'total': total,
+            'tax_rate': tax_rate_percent,
         })
 
     def post(self, request, pk, *args, **kwargs):
+        from decimal import Decimal, ROUND_HALF_UP
+        from django.conf import settings
         pedido = get_object_or_404(Pedido, pk=pk)
         form = PedidoProductoForm(request.POST)
         if form.is_valid():
@@ -167,11 +179,16 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
         items = list(pedido.items.select_related('producto'))
         for item in items:
             item.subtotal = item.producto.precio * item.cantidad
-        total = sum(item.subtotal for item in items)
+        subtotal = sum(item.subtotal for item in items)
+        tax_rate = Decimal(str(getattr(settings, 'TAX_RATE', 0.19)))
+        impuesto = (Decimal(subtotal) * tax_rate).quantize(Decimal('1.'), rounding=ROUND_HALF_UP)
+        total = Decimal(subtotal) + impuesto
         return render(request, self.template_name, {
             'pedido': pedido,
             'form': form,
             'items': items,
+            'subtotal': subtotal,
+            'impuesto': impuesto,
             'total': total,
         })
 
@@ -345,6 +362,18 @@ class CocinaDashboardView(LoginRequiredMixin, ListView):
         return super().get_queryset().filter(
             estado__in=['en_preparacion', 'listo']
         ).order_by('fecha_creacion')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        # Obtener el rol del usuario autenticado
+        try:
+            profile = user.userprofile
+            role_name = profile.role.name if profile.role else ''
+        except Exception:
+            role_name = ''
+        context['user_role'] = role_name
+        return context
 
 
 class PedidoMarcarListoView(LoginRequiredMixin, View):
