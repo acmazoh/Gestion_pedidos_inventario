@@ -1,3 +1,4 @@
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5,6 +6,15 @@
     <title>Detalle del Pedido</title>
 </head>
 <body>
+        {% if messages %}
+        <div style="margin: 16px 0;">
+            {% for message in messages %}
+                <div style="padding:10px; border-radius:4px; margin-bottom:8px; {% if message.tags == 'success' %}background:#e8f5e9; color:#256029; border:1px solid #43a047;{% elif message.tags == 'error' %}background:#ffebee; color:#b71c1c; border:1px solid #e53935;{% else %}background:#e3f2fd; color:#1565c0; border:1px solid #1976d2;{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     <h1>Pedido {{ pedido.id }} - {{ pedido.mesa_o_online }}</h1>
 
     <nav>
@@ -47,6 +57,10 @@
                 <td>{{ item.producto.precio }}</td>
                 <td>{{ item.cantidad }}</td>
                 <td>{{ item.subtotal }}</td>
+=======
+                <td>${{ item.producto.precio|intcomma }}</td>
+                <td class="item-qty">{{ item.cantidad }}</td>
+                <td class="item-subtotal">${{ item.subtotal|intcomma }}</td>
                 {% if pedido.estado == 'pendiente' %}
                 <td>
                     <form method="post" action="{% url 'pedido_item_increment' pedido.id item.id %}" style="display:inline;">
@@ -81,6 +95,25 @@
     </table>
 
     <h2>Confirmar pedido</h2>
+=======
+
+    <div id="total-display" style="margin-top:18px;">
+        <table style="font-size:16px;"> <!-- igual que celdas de productos -->
+            <tr>
+                <td style="font-weight:bold; color:#1565C0;">Subtotal:</td>
+                <td style="text-align:right; color:#000; font-weight:normal;">${{ subtotal|intcomma }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight:bold; color:#1565C0;">Impuesto ({{ tax_rate|floatformat:0 }}%):</td>
+                <td style="text-align:right; color:#000; font-weight:normal;">${{ impuesto|intcomma }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight:bold; color:#1565C0;">Total:</td>
+                <td style="text-align:right; color:#000; font-weight:bold;">${{ total|intcomma }}</td>
+            </tr>
+        </table>
+    </div>
+>>>>>>> mejoras-backend
 
     {% if pedido.estado == 'pendiente' and items %}
     <form method="post" action="{% url 'pedido_confirm' pedido.id %}">

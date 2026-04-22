@@ -1,3 +1,4 @@
+{% load humanize %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -41,7 +42,7 @@
     </a>
 
     {% if transacciones %}
-    <p><strong style="color:#4CAF50;">Total del período: ${{ total_periodo }}</strong></p>
+    <p><strong style="color:#4CAF50;">Total del período: ${{ total_periodo|intcomma }}</strong></p>
     <table>
         <thead>
             <tr>
@@ -63,7 +64,7 @@
                         {{ item.producto.nombre }} x{{ item.cantidad }}{% if not forloop.last %}, {% endif %}
                     {% endfor %}
                 </td>
-                <td>${{ t.total }}</td>
+                <td>${{ t.total|intcomma }}</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -1,9 +1,46 @@
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Pedido, PedidoProducto, Transaccion
+from .serializers import PedidoCreateSerializer, PedidoSerializer, PedidoItemSerializer
+from .serializers_transaccion import TransaccionSerializer
+from users.permissions import HasRolePermission
+from products.models import Producto
+from django.utils import timezone
+from decimal import Decimal
+from django.conf import settings
+from rest_framework import viewsets
+from rest_framework.decorators import action
+
+# Endpoint API REST para crear órdenes
+class PedidoCreateAPIView(APIView):
+    permission_classes = [HasRolePermission('create_orders')]
+
+    def post(self, request):
+        profile = getattr(request.user, 'userprofile', None)
+        if not profile or not profile.is_active or not profile.role or profile.role.name not in ['admin', 'waiter', 'cashier']:
+            return Response({'error': 'No tiene permiso para crear pedidos.'}, status=403)
+        serializer = PedidoCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            pedido = serializer.save(creado_por=request.user)
+            return Response({
+                'id': pedido.id,
+                'mesa_o_online': pedido.mesa_o_online,
+                'fecha_creacion': pedido.fecha_creacion,
+                'productos': [
+                    {'producto': pp.producto.nombre, 'cantidad': pp.cantidad}
+                    for pp in pedido.items.select_related('producto')
+                ]
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from django.utils import timezone
 
 class PedidosActivosAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasRolePermission('view_orders')]
+    permission_classes = [HasRolePermission('view_orders')]
 
     def get(self, request):
         ahora = timezone.now()
@@ -82,6 +119,9 @@ class PedidoViewSet(viewsets.ModelViewSet):
     # ── Agregar / actualizar ítem ────────────────────────────────────────────
     @action(detail=True, methods=['post'], url_path='add-item')
     def add_item(self, request, pk=None):
+        profile = getattr(request.user, 'userprofile', None)
+        if not profile or not profile.is_active or not profile.role or profile.role.name not in ['admin', 'waiter', 'cashier']:
+            return Response({'error': 'No tiene permiso para modificar pedidos.'}, status=403)
         """
         POST /api/orders/{id}/add-item/
         Body: {producto_id, cantidad}
@@ -123,6 +163,9 @@ class PedidoViewSet(viewsets.ModelViewSet):
     # ── Eliminar ítem ────────────────────────────────────────────────────────
     @action(detail=True, methods=['delete'], url_path=r'items/(?P<item_id>\d+)')
     def remove_item(self, request, pk=None, item_id=None):
+        profile = getattr(request.user, 'userprofile', None)
+        if not profile or not profile.is_active or not profile.role or profile.role.name not in ['admin', 'waiter', 'cashier']:
+            return Response({'error': 'No tiene permiso para modificar pedidos.'}, status=403)
         """DELETE /api/orders/{id}/items/{item_id}/"""
         pedido = self.get_object()
         if pedido.estado != 'pendiente':
@@ -137,11 +180,18 @@ class PedidoViewSet(viewsets.ModelViewSet):
 
         item.delete()
         pedido.refresh_from_db()
+        if not pedido.items.exists():
+            # Si la orden queda vacía, eliminar la orden y notificar
+            pedido.delete()
+            return Response({'error': 'La orden ha sido eliminada porque no puede quedar vacía.'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(self.get_serializer(pedido).data, status=status.HTTP_200_OK)
 
     # ── Actualizar cantidad de ítem ──────────────────────────────────────────
     @action(detail=True, methods=['patch'], url_path=r'items/(?P<item_id>\d+)/quantity')
     def update_item_quantity(self, request, pk=None, item_id=None):
+        profile = getattr(request.user, 'userprofile', None)
+        if not profile or not profile.is_active or not profile.role or profile.role.name not in ['admin', 'waiter', 'cashier']:
+            return Response({'error': 'No tiene permiso para modificar pedidos.'}, status=403)
         """PATCH /api/orders/{id}/items/{item_id}/quantity/  — body: {cantidad}"""
         pedido = self.get_object()
         if pedido.estado != 'pendiente':
@@ -167,6 +217,9 @@ class PedidoViewSet(viewsets.ModelViewSet):
     # ── RF-07: confirmar orden con validación de stock ───────────────────────
     @action(detail=True, methods=['post'], url_path='confirm')
     def confirm(self, request, pk=None):
+        profile = getattr(request.user, 'userprofile', None)
+        if not profile or not profile.is_active or not profile.role or profile.role.name not in ['admin', 'waiter', 'cashier']:
+            return Response({'error': 'No tiene permiso para confirmar pedidos.'}, status=403)
         """
         POST /api/orders/{id}/confirm/
         Valida stock de ingredientes. Si hay faltantes devuelve 409 con detalle.
@@ -230,3 +283,37 @@ class PedidoViewSet(viewsets.ModelViewSet):
         pedido.save(update_fields=['estado'])
 
         return Response(self.get_serializer(pedido).data, status=status.HTTP_200_OK)
+
+    def get_permissions(self):
+        # Solo waiter, cashier y admin pueden crear pedidos
+        if self.action == 'create':
+            return [HasRolePermission('create_orders')]
+        # waiter y cashier pueden gestionar pedidos propios
+        if self.action in ['add_item', 'remove_item', 'update_item_quantity', 'confirm']:
+            return [HasRolePermission('manage_orders')]
+        # kitchen puede ver y actualizar estado
+        if self.action in ['list', 'retrieve', 'calculate_total']:
+            return [HasRolePermission('view_orders')]
+        return [HasRolePermission('manage_orders')]
+
+
+class RegistrarVentaAPIView(APIView):
+    permission_classes = [HasRolePermission('manage_payments')]
+
+    def post(self, request):
+        pedido_id = request.data.get('pedido_id')
+        if not pedido_id:
+            return Response({'error': 'Se requiere pedido_id.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            pedido = Pedido.objects.get(id=pedido_id)
+        except Pedido.DoesNotExist:
+            return Response({'error': 'Pedido no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+        if hasattr(pedido, 'transaccion'):
+            return Response({'error': 'La transacción para este pedido ya existe.'}, status=status.HTTP_400_BAD_REQUEST)
+        total = sum(
+            item.producto.precio * item.cantidad
+            for item in pedido.items.select_related('producto')
+        )
+        transaccion = Transaccion.objects.create(pedido=pedido, total=total)
+        serializer = TransaccionSerializer(transaccion)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

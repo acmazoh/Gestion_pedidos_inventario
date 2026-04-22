@@ -5,6 +5,19 @@
     <title>Lista de Pedidos</title>
 </head>
 <body>
+=======
+    <nav>
+        <a href="/ventas/" style="color:#2196F3; font-weight:bold; text-decoration:none;">Ventas</a> |
+        <a href="/products/" style="color:#2196F3; font-weight:bold; text-decoration:none;">Productos</a> |
+        <a href="{% url 'pedido_create' %}">Nueva Orden</a> |
+        <a href="{% url 'cocina_dashboard' %}">Cocina</a>
+        <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
+            {% csrf_token %}
+            <button type="submit" style="background:none;border:none;color:#9C27B0;cursor:pointer;padding:0;font-weight:bold;">Cerrar Sesión ({{ request.user.username }})</button>
+        </form>
+    </nav>
+
+>>>>>>> mejoras-backend
     <h1>Pedidos</h1>
     <div>
         <a href="{% url 'pedido_create' %}">Crear Nuevo Pedido</a> |

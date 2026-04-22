@@ -37,11 +37,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Third-party
+    "django.contrib.humanize",
     "rest_framework",
-    "rest_framework.authtoken",
-    "corsheaders",
-    # Project apps
+    "rest_framework_simplejwt.token_blacklist",
     "products",
     "ventas",
     "users",
@@ -115,8 +113,9 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
+
+# Redirección tras login para tests y UX
+LOGIN_REDIRECT_URL = '/ventas/pedidos/'
 
 STATIC_URL = "static/"
 
@@ -125,23 +124,20 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# ── Django REST Framework ─────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
 }
 
-# ── CORS (React dev server on :5173) ─────────────────────────────────────────
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-CORS_ALLOW_CREDENTIALS = True
-
-# ── IVA Colombia ─────────────────────────────────────────────────────────────
-TAX_RATE = 0.19
+# JWT: aumentar expiración del token a 30 días para desarrollo
+from datetime import timedelta
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=60),
+}

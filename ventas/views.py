@@ -93,10 +93,23 @@ class ProductoVentaListView(ListView):
     context_object_name = 'productos'
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        from django.db.models import F, OuterRef, Exists
+        from products.models import ProductoIngrediente
+
+        queryset = super().get_queryset().filter(disponible=True)
         categoria_id = self.request.GET.get('categoria')
         if categoria_id:
             queryset = queryset.filter(categoria_id=categoria_id)
+
+        # Solo productos con receta y todos los ingredientes con stock suficiente
+        queryset = queryset.filter(productoingrediente__isnull=False).distinct()
+        pi_sub = ProductoIngrediente.objects.filter(
+            producto=OuterRef('pk'),
+            ingrediente__stock__lt=F('cantidad')
+        )
+        queryset = queryset.annotate(
+            tiene_faltante=Exists(pi_sub)
+        ).filter(tiene_faltante=False)
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -130,8 +143,8 @@ class PedidoListView(LoginRequiredMixin, ListView):
     context_object_name = 'pedidos'
 
     def get_queryset(self):
-        # Show only orders created by the current user
-        return super().get_queryset().filter(creado_por=self.request.user)
+        # Mostrar solo los pedidos del usuario autenticado
+        return Pedido.objects.filter(creado_por=self.request.user).order_by('-fecha_creacion')
 
 
 class PedidoDetailView(LoginRequiredMixin, ListView):
@@ -140,20 +153,32 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
     context_object_name = 'items'
 
     def get(self, request, pk, *args, **kwargs):
+        from decimal import Decimal, ROUND_HALF_UP
+        from django.conf import settings
         pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
         form = PedidoProductoForm()
         items = list(pedido.items.select_related('producto'))
         for item in items:
             item.subtotal = item.producto.precio * item.cantidad
-        total = sum(item.subtotal for item in items)
+        subtotal = sum(item.subtotal for item in items)
+        tax_rate = Decimal(str(getattr(settings, 'TAX_RATE', 0.19)))
+        impuesto = (Decimal(subtotal) * tax_rate).quantize(Decimal('1.'), rounding=ROUND_HALF_UP)
+        total = Decimal(subtotal) + impuesto
+        # Para mostrar el porcentaje de impuesto en la plantilla
+        tax_rate_percent = (tax_rate * 100).quantize(Decimal('1.'), rounding=ROUND_HALF_UP)
         return render(request, self.template_name, {
             'pedido': pedido,
             'form': form,
             'items': items,
+            'subtotal': subtotal,
+            'impuesto': impuesto,
             'total': total,
+            'tax_rate': tax_rate_percent,
         })
 
     def post(self, request, pk, *args, **kwargs):
+        from decimal import Decimal, ROUND_HALF_UP
+        from django.conf import settings
         pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
         form = PedidoProductoForm(request.POST)
         if form.is_valid():
@@ -172,11 +197,16 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
         items = list(pedido.items.select_related('producto'))
         for item in items:
             item.subtotal = item.producto.precio * item.cantidad
-        total = sum(item.subtotal for item in items)
+        subtotal = sum(item.subtotal for item in items)
+        tax_rate = Decimal(str(getattr(settings, 'TAX_RATE', 0.19)))
+        impuesto = (Decimal(subtotal) * tax_rate).quantize(Decimal('1.'), rounding=ROUND_HALF_UP)
+        total = Decimal(subtotal) + impuesto
         return render(request, self.template_name, {
             'pedido': pedido,
             'form': form,
             'items': items,
+            'subtotal': subtotal,
+            'impuesto': impuesto,
             'total': total,
         })
 
@@ -273,6 +303,61 @@ class PedidoConfirmarView(LoginRequiredMixin, View):
         return redirect('pedido_detail', pk=pk)
 
 
+<<<<<<< HEAD
+=======
+# ── RF-08: Vista de Cocina en Tiempo Real ────────────────────────────────────
+
+class PedidosActivosAPIView(LoginRequiredMixin, View):
+    """API endpoint que retorna pedidos activos en JSON para actualizaci\u00f3n en tiempo real.
+
+    Responde con un JSON que contiene:
+    - pedidos: lista de pedidos activos con sus detalles
+    - timestamp: marca de tiempo para comparaci\u00f3n de actualizaci\u00f3n
+    """
+
+    def get(self, request):
+        # Pedidos en preparaci\u00f3n o listos
+        pedidos = Pedido.objects.filter(
+            estado__in=['en_preparacion', 'listo']
+        ).order_by('fecha_creacion')
+
+        # \u00d9ltima actualizaci\u00f3n para detectar cambios (hace 5 segundos)
+        last_update = request.GET.get('last_update')
+        pedidos_json = []
+
+        for pedido in pedidos:
+            items = []
+            for item in pedido.items.select_related('producto'):
+                items.append({
+                    'id': item.id,
+                    'producto': item.producto.nombre,
+                    'cantidad': item.cantidad,
+                })
+
+            # Detectar si es orden nueva (creada hace menos de 30 segundos)
+            ahora = timezone.now()
+            segundos_transcurridos = (ahora - pedido.fecha_creacion).total_seconds()
+            es_nuevo = segundos_transcurridos < 30
+
+            pedidos_json.append({
+                'id': pedido.id,
+                'mesa_o_online': pedido.mesa_o_online,
+                'estado': pedido.estado,
+                'fecha_creacion': pedido.fecha_creacion.isoformat(),
+                'hora_formateada': pedido.fecha_creacion.strftime('%H:%M'),
+                'items': items,
+                'es_nuevo': es_nuevo,
+                'total_items': len(items),
+            })
+
+        return JsonResponse({
+            'pedidos': pedidos_json,
+            'timestamp': timezone.now().isoformat(),
+            'total': len(pedidos_json),
+        })
+
+
+>>>>>>> mejoras-backend
 class CocinaDashboardView(LoginRequiredMixin, ListView):
     """Interfaz de cocina: muestra los pedidos confirmados en tiempo real."""
 
@@ -281,5 +366,109 @@ class CocinaDashboardView(LoginRequiredMixin, ListView):
     context_object_name = 'pedidos'
 
     def get_queryset(self):
-        # Mostrar pedidos que fueron confirmados (en preparación).
-        return super().get_queryset().filter(estado='en_preparacion').order_by('fecha_creacion')
+        # Mostrar pedidos que fueron confirmados (en preparación) y listos.
+        return super().get_queryset().filter(
+            estado__in=['en_preparacion', 'listo']
+        ).order_by('fecha_creacion')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        # Obtener el rol del usuario autenticado
+        try:
+            profile = user.userprofile
+            role_name = profile.role.name if profile.role else ''
+        except Exception:
+            role_name = ''
+        context['user_role'] = role_name
+        return context
+
+
+class PedidoMarcarListoView(LoginRequiredMixin, View):
+    """Cocina marca el pedido como 'listo'."""
+    def post(self, request, pk, *args, **kwargs):
+        pedido = get_object_or_404(Pedido, pk=pk)
+        if pedido.estado == 'en_preparacion':
+            pedido.estado = 'listo'
+            pedido.save()
+        return redirect('cocina_dashboard')
+
+
+class PedidoMarcarEntregadaView(LoginRequiredMixin, View):
+    """Marca el pedido como 'entregada' y registra la Transaccion automáticamente (RF-11)."""
+    def post(self, request, pk, *args, **kwargs):
+        pedido = get_object_or_404(Pedido, pk=pk)
+        if pedido.estado == 'listo':
+            pedido.estado = 'entregada'
+            pedido.save()
+            total = sum(
+                item.producto.precio * item.cantidad
+                for item in pedido.items.select_related('producto')
+            )
+            Transaccion.objects.get_or_create(pedido=pedido, defaults={'total': total})
+        return redirect('cocina_dashboard')
+
+
+class HistorialVentasView(LoginRequiredMixin, ListView):
+    """Historial de ventas (RF-11)."""
+    model = Transaccion
+    template_name = 'ventas/historial_ventas.html'
+    context_object_name = 'transacciones'
+    paginate_by = 20
+
+    def get_queryset(self):
+        qs = Transaccion.objects.select_related('pedido').order_by('-fecha')
+        fecha_desde = self.request.GET.get('desde')
+        fecha_hasta = self.request.GET.get('hasta')
+        if fecha_desde:
+            qs = qs.filter(fecha__date__gte=fecha_desde)
+        if fecha_hasta:
+            qs = qs.filter(fecha__date__lte=fecha_hasta)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['desde'] = self.request.GET.get('desde', '')
+        context['hasta'] = self.request.GET.get('hasta', '')
+        context['total_periodo'] = sum(t.total for t in self.get_queryset())
+        # Adjuntar items a cada transacción para mostrarlos en el template
+        for t in context['transacciones']:
+            t.items_pedido = t.pedido.items.select_related('producto').all()
+        return context
+
+
+class ExportarHistorialCSVView(LoginRequiredMixin, View):
+    """Exporta el historial de ventas filtrado por fecha en formato CSV (RF-11).
+    Acepta los mismos parámetros ?desde= y ?hasta= que HistorialVentasView.
+    Genera un archivo descargable con una fila por producto vendido.
+    """
+    def get(self, request, *args, **kwargs):
+        qs = Transaccion.objects.select_related('pedido').order_by('-fecha')
+        fecha_desde = request.GET.get('desde')
+        fecha_hasta = request.GET.get('hasta')
+        if fecha_desde:
+            qs = qs.filter(fecha__date__gte=fecha_desde)
+        if fecha_hasta:
+            qs = qs.filter(fecha__date__lte=fecha_hasta)
+
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="historial_ventas.csv"'
+        # BOM para compatibilidad con Excel
+        response.write('\ufeff')
+
+        writer = csv.writer(response)
+        writer.writerow(['Fecha', 'Pedido', 'Mesa/Cliente', 'Producto', 'Cantidad', 'Total pedido'])
+
+        for t in qs:
+            items = t.pedido.items.select_related('producto').all()
+            for item in items:
+                writer.writerow([
+                    t.fecha.strftime('%d/%m/%Y %H:%M'),
+                    f'#{t.pedido.id}',
+                    t.pedido.mesa_o_online,
+                    item.producto.nombre,
+                    item.cantidad,
+                    t.total,
+                ])
+
+        return response

@@ -1,10 +1,19 @@
 from rest_framework.permissions import BasePermission
 
 ROLE_PERMISSIONS = {
-    'admin': ['full_access'],
-    'cashier': ['manage_payments', 'manage_orders'],
-    'kitchen': ['view_orders', 'update_order_status'],
-    'waiter': ['create_orders', 'manage_orders'],
+    'admin': [
+        'full_access', 'manage_users', 'manage_orders', 'manage_payments',
+        'view_orders', 'view_products', 'create_orders', 'edit_products', 'delete_products'
+    ],
+    'cashier': [
+        'manage_payments', 'manage_orders', 'view_orders', 'view_products', 'create_orders'
+    ],
+    'kitchen': [
+        'view_orders', 'update_order_status', 'view_products'
+    ],
+    'waiter': [
+        'create_orders', 'manage_orders', 'view_orders', 'view_products'
+    ],
 }
 
 class IsAdmin(BasePermission):
@@ -35,6 +44,9 @@ class HasRolePermission(BasePermission):
             if not profile.is_active or not profile.role:
                 return False
             permissions = ROLE_PERMISSIONS.get(profile.role.name, [])
-            return self.required_permission in permissions or 'full_access' in permissions
-        except:
+            # Admin siempre puede todo
+            if profile.role.name == 'admin':
+                return True
+            return self.required_permission in permissions
+        except Exception as e:
             return False

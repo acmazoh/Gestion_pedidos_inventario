@@ -48,6 +48,9 @@ class UserViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'])
     def create_user(self, request):
+        profile = getattr(request.user, 'userprofile', None)
+        if not profile or not profile.is_active or not profile.role or profile.role.name != 'admin':
+            return Response({'error': 'Solo el administrador puede crear usuarios.'}, status=403)
         serializer = UserCreateSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -56,6 +59,9 @@ class UserViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['put'])
     def update_role(self, request, pk=None):
+        profile = getattr(request.user, 'userprofile', None)
+        if not profile or not profile.is_active or not profile.role or profile.role.name != 'admin':
+            return Response({'error': 'Solo el administrador puede cambiar roles.'}, status=403)
         try:
             user = User.objects.get(pk=pk)
         except User.DoesNotExist:
@@ -70,6 +76,9 @@ class UserViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['delete'])
     def deactivate(self, request, pk=None):
+        profile = getattr(request.user, 'userprofile', None)
+        if not profile or not profile.is_active or not profile.role or profile.role.name != 'admin':
+            return Response({'error': 'Solo el administrador puede desactivar usuarios.'}, status=403)
         try:
             user = User.objects.get(pk=pk)
             profile = user.userprofile

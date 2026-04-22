@@ -17,17 +17,27 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework.authtoken.views import obtain_auth_token
-from users.api_views import me_view
+from django.contrib.auth import views as auth_views
+from users.rate_limited_login import RateLimitedLoginView
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     # Template-based views (mantener compatibilidad)
     path('products/', include('products.urls')),
+    # API REST de productos
+    path('api/products/', include('products.api_urls')),
     path('ventas/', include('ventas.urls')),
-    # REST API
-    path('api/auth/login/', obtain_auth_token, name='api_login'),
-    path('api/auth/me/', me_view, name='me_view'),
-    path('api/', include('products.api_urls')),
-    path('api/', include('ventas.api_urls')),
+    path('users/', include('users.urls')),
+    path('accounts/logout/', auth_views.LogoutView.as_view(next_page='/accounts/login/'), name='logout'),
+    path('login/', RateLimitedLoginView.as_view(), name='login'),
+    # JWT Auth endpoints
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # Endpoints de autenticación amigables
+    path('api/auth/', include('users.api_urls')),
 ]
