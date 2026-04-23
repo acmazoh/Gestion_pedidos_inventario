@@ -23,6 +23,7 @@ urlpatterns = [
     # Nuevos estados de pedido (RF-09 / RF-11)
     path('pedidos/<int:pk>/listo/', views.PedidoMarcarListoView.as_view(), name='pedido_listo'),
     path('pedidos/<int:pk>/entregada/', views.PedidoMarcarEntregadaView.as_view(), name='pedido_entregada'),
+    path('pedidos/<int:pk>/pagado/', views.PedidoMarcarPagadoView.as_view(), name='pedido_pagado'),
 
     # Historial de ventas (RF-11)
     path('ventas/historial/', views.HistorialVentasView.as_view(), name='historial_ventas'),

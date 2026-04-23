@@ -23,6 +23,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from django.views.generic import RedirectView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -31,9 +32,11 @@ urlpatterns = [
     # API REST de productos
     path('api/products/', include('products.api_urls')),
     path('ventas/', include('ventas.urls')),
+    path('cocina/', RedirectView.as_view(pattern_name='cocina_dashboard', permanent=False)),
     path('users/', include('users.urls')),
+    path('accounts/login/', RateLimitedLoginView.as_view(), name='login'),
     path('accounts/logout/', auth_views.LogoutView.as_view(next_page='/accounts/login/'), name='logout'),
-    path('login/', RateLimitedLoginView.as_view(), name='login'),
+    path('login/', RedirectView.as_view(pattern_name='login', permanent=False)),
     # JWT Auth endpoints
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

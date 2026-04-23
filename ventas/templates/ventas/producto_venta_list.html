@@ -1,38 +1,384 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Productos Disponibles - POS</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ventas - Productos Disponibles</title>
+    <style>
+        :root {
+            --white: #FFFFFF;
+            --green: #4CAF50;
+            --blue: #2196F3;
+            --blue-dark: #1565C0;
+            --purple: #9C27B0;
+            --red: #F44336;
+            --black: #000000;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --bg: #f4f8fd;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #111827;
+            min-height: 100vh;
+            background: radial-gradient(circle at 20% 0%, #ebf4ff 0%, #f8fbff 45%, #ffffff 100%);
+        }
+
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--white);
+            border-bottom: 1px solid var(--line);
+            box-shadow: 0 2px 10px rgba(21, 101, 192, 0.08);
+            padding: 10px 20px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand { font-size: 18px; font-weight: 800; color: var(--black); }
+        .brand span { color: var(--purple); }
+
+        .nav-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .nav-end {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .btn-nav {
+            text-decoration: none;
+            border: 1px solid var(--blue);
+            color: var(--blue);
+            background: var(--white);
+            border-radius: 8px;
+            padding: 5px 11px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: 0.18s ease;
+            cursor: pointer;
+        }
+        .btn-nav:hover, .btn-nav.active { background: #eaf3ff; }
+
+        .btn-logout {
+            border: 1px solid var(--purple);
+            background: var(--white);
+            color: var(--purple);
+            border-radius: 8px;
+            padding: 5px 11px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .btn-logout:hover { background: #f4e8f8; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 22px 14px 30px;
+        }
+
+        .page-title {
+            margin-bottom: 16px;
+        }
+
+        .page-title h1 {
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--blue-dark);
+            line-height: 1.1;
+        }
+
+        .page-title p {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .kpi {
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+        }
+
+        .kpi .label {
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.4px;
+            color: var(--muted);
+        }
+
+        .kpi .value {
+            margin-top: 6px;
+            font-size: 24px;
+            font-weight: 800;
+            color: #111827;
+        }
+
+        .filter-wrap {
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .filter-title {
+            font-size: 12px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 10px;
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            text-decoration: none;
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            color: var(--blue-dark);
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            transition: 0.18s ease;
+        }
+
+        .chip:hover {
+            background: #dbeafe;
+        }
+
+        .chip.active {
+            border-color: var(--purple);
+            background: #f5e9f9;
+            color: var(--purple);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 14px;
+        }
+
+        .product-card {
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--blue);
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(33, 150, 243, 0.14);
+        }
+
+        .product-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .name {
+            font-size: 18px;
+            font-weight: 800;
+            color: #111827;
+        }
+
+        .price {
+            color: var(--green);
+            font-size: 17px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .badge-category {
+            border: 1px solid #cfe2ff;
+            color: var(--blue-dark);
+            background: #ebf3ff;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 11px;
+        }
+
+        .desc {
+            font-size: 13px;
+            color: #374151;
+            line-height: 1.4;
+            min-height: 36px;
+        }
+
+        .ingredients {
+            margin-top: 2px;
+            border-top: 1px dashed #dbe5f1;
+            padding-top: 8px;
+            font-size: 12px;
+            color: #334155;
+            line-height: 1.4;
+        }
+
+        .ingredients strong {
+            color: var(--purple);
+        }
+
+        .empty {
+            border: 1px dashed #c7d2e2;
+            background: rgba(255,255,255,0.75);
+            border-radius: 12px;
+            padding: 34px 16px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .empty strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 18px;
+        }
+
+        @media (max-width: 700px) {
+            .app-header {
+                padding: 10px 12px;
+            }
+
+            .page-title h1 {
+                font-size: 24px;
+            }
+
+            .container {
+                padding: 16px 10px 24px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Interfaz de Ventas - Productos Disponibles</h1>
-    
-    <nav>
-        <a href="{% url 'pedido_list' %}">Ver Pedidos</a> |
-        <a href="{% url 'pedido_create' %}">Crear Nuevo Pedido</a> |
-        <a href="{% url 'cocina_dashboard' %}">Vista de Cocina</a>
-    </nav>
-    
-    <h2>Categorías</h2>
-    <div>
-        {% for categoria in categorias %}
-        <button onclick="window.location.href='?categoria={{ categoria.id }}'">{{ categoria.nombre }}</button>
-        {% endfor %}
-    </div>
-    
-    {% if categoria_seleccionada %}
-    <h2>Productos en la categoría: {{ categoria_seleccionada.nombre }}</h2>
-    <ul>
-        {% for producto in productos %}
-        <li>
-            <strong>{{ producto.nombre }}</strong> - {{ producto.precio }}<br>
-            Categoría: {{ producto.categoria }}<br>
-            Descripción: {{ producto.descripcion|default:"Sin descripción" }}<br>
-            Ingredientes: {% for ing in producto.ingredientes.all %}{{ ing.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}
-        </li>
-        {% empty %}
-        <li>No hay productos disponibles en esta categoría.</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
+    <header class="app-header">
+        <div class="brand">🧾 Restin <span>Ventas</span></div>
+        <nav class="nav-center">
+            <a href="{% url 'venta_list' %}" class="btn-nav active">Ventas</a>
+            <a href="{% url 'pedido_list' %}" class="btn-nav">Pedidos</a>
+            <a href="{% url 'pedido_create' %}" class="btn-nav">Nuevo Pedido</a>
+            <a href="{% url 'cocina_dashboard' %}" class="btn-nav">Cocina</a>
+            <a href="{% url 'historial_ventas' %}" class="btn-nav">Historial</a>
+            <a href="/products/" class="btn-nav">Productos</a>
+        </nav>
+        <div class="nav-end">
+            <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-logout">Salir ({{ request.user.username }})</button>
+            </form>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="page-title">
+            <h1>Productos Disponibles</h1>
+            <p>Selecciona una categoria y agrega productos a tus pedidos activos.</p>
+        </section>
+
+        <section class="kpis" aria-label="Resumen ventas">
+            <article class="kpi">
+                <div class="label">Productos disponibles</div>
+                <div class="value">{{ productos|length }}</div>
+            </article>
+            <article class="kpi">
+                <div class="label">Categorias</div>
+                <div class="value">{{ categorias|length }}</div>
+            </article>
+        </section>
+
+        <section class="filter-wrap" aria-label="Filtro por categoria">
+            <h2 class="filter-title">Filtrar por categoria</h2>
+            <div class="chips">
+                <a href="{% url 'venta_list' %}" class="chip {% if not categoria_seleccionada %}active{% endif %}">Todas</a>
+                {% for categoria in categorias %}
+                    <a href="?categoria={{ categoria.id }}" class="chip {% if categoria_seleccionada and categoria_seleccionada.id == categoria.id %}active{% endif %}">{{ categoria.nombre }}</a>
+                {% endfor %}
+            </div>
+        </section>
+
+        {% if productos %}
+            <section class="products-grid" aria-label="Listado de productos">
+                {% for producto in productos %}
+                    <article class="product-card">
+                        <div class="product-head">
+                            <h3 class="name">{{ producto.nombre }}</h3>
+                            <span class="price">$ {{ producto.precio }}</span>
+                        </div>
+
+                        <div class="meta">
+                            <span class="badge-category">{{ producto.categoria }}</span>
+                            <span>Stock OK</span>
+                        </div>
+
+                        <p class="desc">{{ producto.descripcion|default:"Sin descripcion" }}</p>
+
+                        <p class="ingredients">
+                            <strong>Ingredientes:</strong>
+                            {% for ing in producto.ingredientes.all %}
+                                {{ ing.nombre }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                Sin ingredientes registrados
+                            {% endfor %}
+                        </p>
+                    </article>
+                {% endfor %}
+            </section>
+        {% else %}
+            <section class="empty">
+                <strong>No hay productos disponibles</strong>
+                No se encontraron productos con stock suficiente para esta categoria.
+            </section>
+        {% endif %}
+    </main>
 </body>
 </html>

@@ -396,6 +396,11 @@ class ConfirmarOrdenTest(TestCase):
         pedidos_cocina = list(resp.context['pedidos'])
         self.assertIn(self.pedido.pk, [p.pk for p in pedidos_cocina])
 
+    def test_alias_cocina_redirige_al_dashboard(self):
+        """La URL corta /cocina/ redirige al panel de cocina existente."""
+        resp = self.client.get('/cocina/')
+        self.assertRedirects(resp, reverse('cocina_dashboard'))
+
     def test_no_puede_confirmar_orden_ya_confirmada(self):
         """Intentar confirmar una orden ya confirmada muestra error y no cambia estado."""
         PedidoProducto.objects.create(pedido=self.pedido, producto=self.producto, cantidad=1)

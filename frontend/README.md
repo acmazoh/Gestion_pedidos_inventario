@@ -120,7 +120,7 @@ proxy: {
   '/api': { target: 'http://tu-backend.com', ... }
 }
 ```
-=======
+
 # Frontend - Autenticación de Usuarios (RF-13)
 
 ## Pantalla de Login

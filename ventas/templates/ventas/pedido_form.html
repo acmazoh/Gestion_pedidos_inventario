@@ -2,18 +2,344 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Crear Nuevo Pedido</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Pedido - Restin POS</title>
+    <style>
+        :root {
+            --white: #FFFFFF;
+            --green: #4CAF50;
+            --blue: #2196F3;
+            --blue-dark: #1565C0;
+            --purple: #9C27B0;
+            --red: #F44336;
+            --black: #000000;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            color: #111827;
+            background:
+                radial-gradient(circle at 15% -10%, rgba(33, 150, 243, 0.2), transparent 40%),
+                radial-gradient(circle at 90% 0%, rgba(156, 39, 176, 0.12), transparent 40%),
+                linear-gradient(180deg, #eef5ff 0%, #f8fbff 55%, #ffffff 100%);
+        }
+
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--white);
+            border-bottom: 1px solid var(--line);
+            box-shadow: 0 2px 10px rgba(21, 101, 192, 0.08);
+            padding: 10px 20px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand { font-size: 18px; font-weight: 800; color: var(--black); }
+        .brand span { color: var(--purple); }
+
+        .nav-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .nav-end {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .btn-nav {
+            text-decoration: none;
+            border: 1px solid var(--blue);
+            color: var(--blue);
+            background: var(--white);
+            border-radius: 8px;
+            padding: 5px 11px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: 0.18s ease;
+            cursor: pointer;
+        }
+        .btn-nav:hover, .btn-nav.active { background: #eaf3ff; }
+
+        .btn-logout {
+            border: 1px solid var(--purple);
+            background: var(--white);
+            color: var(--purple);
+            border-radius: 8px;
+            padding: 5px 11px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .btn-logout:hover { background: #f4e8f8; }
+
+        .page {
+            min-height: calc(100vh - 72px);
+            display: grid;
+            place-items: center;
+            padding: 22px 12px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 560px;
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--blue-dark);
+            border-radius: 16px;
+            box-shadow: 0 18px 38px rgba(2, 19, 45, 0.08);
+            overflow: hidden;
+            animation: card-in .35s ease;
+        }
+
+        @keyframes card-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-head {
+            padding: 18px 18px 14px;
+            border-bottom: 1px solid #edf2f7;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        }
+
+        .eyebrow {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--purple);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        h1 {
+            font-size: 28px;
+            line-height: 1.1;
+            color: var(--blue-dark);
+            font-weight: 800;
+        }
+
+        .sub {
+            margin-top: 8px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .card-body {
+            padding: 16px 18px 18px;
+        }
+
+        .error-box {
+            margin-bottom: 12px;
+            border: 1px solid #f5c2c7;
+            background: #fff5f5;
+            color: #b42318;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+            width: 100%;
+            border: 1px solid #cfd8e3;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+            background: #fff;
+            color: #0f172a;
+        }
+
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.18);
+        }
+
+        .field .help {
+            margin-top: 7px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .field-error {
+            margin-top: 6px;
+            color: #b42318;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.18s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: var(--green);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(0.95);
+        }
+
+        .btn-secondary {
+            background: #edf4ff;
+            color: var(--blue-dark);
+            border: 1px solid #bfdbfe;
+        }
+
+        .btn-secondary:hover {
+            background: #dcecff;
+        }
+
+        .note {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px dashed #dbe4ef;
+            color: #4b5563;
+            font-size: 12px;
+        }
+
+        .note strong {
+            color: var(--purple);
+        }
+
+        @media (max-width: 620px) {
+            .card-head,
+            .card-body {
+                padding: 14px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Crear Nuevo Pedido</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Crear Pedido</button>
-    </form>
-    <div>
-        <a href="{% url 'pedido_list' %}">Ver Pedidos</a> |
-        <a href="{% url 'venta_list' %}">Volver a Productos</a>
-    </div>
+    <header class="app-header">
+        <div class="brand">🧾 Restin <span>Pedidos</span></div>
+        <nav class="nav-center">
+            <a href="{% url 'venta_list' %}" class="btn-nav">Ventas</a>
+            <a href="{% url 'pedido_list' %}" class="btn-nav">Pedidos</a>
+            <a href="{% url 'pedido_create' %}" class="btn-nav active">Nuevo Pedido</a>
+            <a href="{% url 'cocina_dashboard' %}" class="btn-nav">Cocina</a>
+            <a href="{% url 'historial_ventas' %}" class="btn-nav">Historial</a>
+            <a href="/products/" class="btn-nav">Productos</a>
+        </nav>
+        <div class="nav-end">
+            <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-logout">Salir ({{ request.user.username }})</button>
+            </form>
+        </div>
+    </header>
+
+    <main class="page">
+        <section class="card" aria-label="Formulario nuevo pedido">
+            <div class="card-head">
+                <p class="eyebrow">Creacion de orden</p>
+                <h1>Nuevo pedido</h1>
+                <p class="sub">Ingresa la mesa o el identificador online para iniciar la orden.</p>
+            </div>
+
+            <div class="card-body">
+                {% if form.non_field_errors %}
+                    <div class="error-box">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="field">
+                        <label for="{{ form.mesa_o_online.id_for_label }}">{{ form.mesa_o_online.label }}</label>
+                        {{ form.mesa_o_online }}
+                        <p class="help">Ejemplo: Mesa 4, Domicilio 18, Rappi #3021.</p>
+                        {% if form.mesa_o_online.errors %}
+                            <div class="field-error">
+                                {% for error in form.mesa_o_online.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="actions">
+                        <button type="submit" class="btn btn-primary">Crear pedido</button>
+                        <a href="{% url 'pedido_list' %}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+
+                <div class="note">
+                    <strong>Tip:</strong> despues de crear el pedido podras agregar productos y luego confirmarlo para que aparezca en cocina.
+                </div>
+            </div>
+        </section>
+    </main>
 </body>
 </html>

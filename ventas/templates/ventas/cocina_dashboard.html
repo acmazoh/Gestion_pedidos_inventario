@@ -2,335 +2,515 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Cocina - Pedidos en Preparación</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Cocina — Restin POS</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f7;
+            color: #111;
+            min-height: 100vh;
+        }
+
+        /* ── HEADER ── */
+        .app-header {
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 0 24px;
+            height: 60px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 4px rgba(0,0,0,.06);
+        }
+
+        .header-brand {
+            font-size: 17px;
+            font-weight: 700;
+            color: #111;
+            letter-spacing: -.3px;
+        }
+        .header-brand span { color: #9C27B0; }
+
+        .status-line {
+            font-size: 11px;
+            color: #888;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .online-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            display: inline-block;
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: .4; }
+        }
+
+        .nav-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .nav-end {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .btn-nav {
+            font-size: 12px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            border: 1px solid #2196F3;
+            background: #fff;
+            color: #2196F3;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 700;
+            transition: background .15s, color .15s;
+        }
+        .btn-nav:hover, .btn-nav.active { background: #E3F2FD; }
+        .btn-logout {
+            border: 1px solid #9C27B0;
+            background: #fff;
+            color: #9C27B0;
+            border-radius: 8px;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .15s;
+        }
+        .btn-logout:hover { background: #f4e8f8; }
+
+        /* ── STAT BAR ── */
+        .stat-bar {
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            padding: 10px 24px;
+            display: flex;
+            gap: 24px;
+            font-size: 13px;
+            color: #555;
+        }
+        .stat-item strong { color: #111; font-size: 16px; }
+        .stat-sep { color: #d0d0d0; }
+
+        /* ── GRID ── */
+        .main-content { padding: 24px; }
+
+        .pedidos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        /* ── CARDS ── */
+        .pedido-card {
+            background: #fff;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,.06);
+            display: flex;
+            flex-direction: column;
+            transition: transform .2s, box-shadow .2s;
+            position: relative;
+        }
+        .pedido-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,.1);
+        }
+
+        /* Estado: en_preparacion → azul oscuro (#1565C0) */
+        .pedido-card.en_preparacion { border-top: 4px solid #1565C0; }
+        .estado-badge.en_preparacion { background: #E3F2FD; color: #1565C0; }
+
+        /* Estado: listo → verde */
+        .pedido-card.listo { border-top: 4px solid #4CAF50; }
+        .estado-badge.listo { background: #E8F5E9; color: #2E7D32; }
+
+        /* Nueva orden → animación de destello morado */
+        .pedido-card.nuevo { animation: flash-new 1s ease 2; }
+        @keyframes flash-new {
+            0%, 100% { box-shadow: 0 2px 6px rgba(0,0,0,.06); }
+            50%       { box-shadow: 0 0 0 4px rgba(156,39,176,.45); }
+        }
+
+        /* Badge NUEVO */
+        .badge-nuevo {
+            position: absolute;
+            top: 10px; right: 10px;
+            background: #9C27B0;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+            letter-spacing: .5px;
+            animation: badge-pulse 1s infinite alternate;
+        }
+        @keyframes badge-pulse {
+            from { opacity: 1; }
+            to   { opacity: .6; }
+        }
+
+        .card-header {
+            padding: 14px 16px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .card-id { font-size: 20px; font-weight: 700; color: #111; }
+        .card-meta { font-size: 12px; color: #777; text-align: right; }
+        .card-mesa { font-size: 14px; font-weight: 600; color: #333; margin-top: 2px; }
+
+        .estado-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+        }
+
+        .card-body {
+            padding: 12px 16px;
+            flex: 1;
+        }
+        .productos-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+        .productos-lista {
+            list-style: none;
+        }
+        .producto-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px dashed #f0f0f0;
+            font-size: 14px;
+        }
+        .producto-item:last-child { border-bottom: none; }
+        .producto-nombre { color: #222; }
+        .cantidad-badge {
+            background: #ede7f6;
+            color: #5e35b1;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .sin-productos { color: #bbb; font-style: italic; font-size: 13px; padding: 8px 0; }
+
+        .card-footer {
+            padding: 12px 16px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            gap: 8px;
+        }
+        .btn-estado {
+            flex: 1;
+            padding: 9px;
+            border: none;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: filter .15s, transform .1s;
+        }
+        .btn-estado:active { transform: scale(.97); }
+        .btn-listo    { background: #4CAF50; color: #fff; }
+        .btn-listo:hover { filter: brightness(1.1); }
+        .btn-entregada { background: #FF9800; color: #fff; }
+        .btn-entregada:hover { filter: brightness(1.1); }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            display: none;
+            text-align: center;
+            padding: 80px 24px;
+            color: #bbb;
+        }
+        .empty-state .empty-icon { font-size: 56px; margin-bottom: 16px; }
+        .empty-state h2 { font-size: 20px; color: #999; font-weight: 500; }
+        .empty-state p  { font-size: 14px; margin-top: 6px; }
+
+        /* ── NOTIFICATION TOAST ── */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #212121;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,.3);
+            z-index: 999;
+            animation: slide-in .3s ease;
+        }
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 600px) {
+            .stat-bar { gap: 12px; flex-wrap: wrap; }
+            .nav-center .btn-nav { display: none; }
+            .main-content { padding: 12px; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Panel de Cocina</h1>
-    <nav>
-        <a href="{% url 'pedido_list' %}">Ver Pedidos (Mesero)</a> |
-        <a href="{% url 'venta_list' %}">Ver Productos</a>
+
+<!-- HEADER -->
+<header class="app-header">
+    <div class="header-brand">
+        🍽️ Restin <span>Cocina</span>
+        <div class="status-line">
+            <span class="online-dot"></span>
+            <span id="status-text">En línea</span>
+            &mdash;
+            <span id="last-update-text">esperando...</span>
+        </div>
+    </div>
+
+    <nav class="nav-center">
+        <a href="{% url 'venta_list' %}" class="btn-nav">Ventas</a>
+        <a href="{% url 'pedido_list' %}" class="btn-nav">Pedidos</a>
+        <a href="{% url 'pedido_create' %}" class="btn-nav">Nuevo Pedido</a>
+        <a href="{% url 'cocina_dashboard' %}" class="btn-nav active">Cocina</a>
+        <a href="{% url 'historial_ventas' %}" class="btn-nav">Historial</a>
+        <a href="/products/" class="btn-nav">Productos</a>
     </nav>
 
-    <p>Esta pantalla se actualiza automáticamente cada <strong>10 segundos</strong> para mostrar los pedidos recién confirmados.</p>
-=======
-        <!-- NAVIGATION -->
-        <nav>
-            <a href="{% url 'pedido_list' %}">📋 Pedidos</a>
-            <a href="{% url 'pedido_create' %}">📝 Nueva Orden</a>
-            <a href="{% url 'cocina_dashboard' %}">🍳 Cocina</a>
-            <a href="{% url 'historial_ventas' %}">📊 Historial</a>
-        </nav>
->>>>>>> mejoras-backend
+    <div class="nav-end">
+        <form method="post" action="{% url 'logout' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn-logout">Salir ({{ request.user.username }})</button>
+        </form>
+    </div>
+</header>
 
-    <table border="1" cellpadding="8" cellspacing="0">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Mesa / Online</th>
-                <th>Hora de creación</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for pedido in pedidos %}
-            <tr>
-                <td>{{ pedido.id }}</td>
-                <td>{{ pedido.mesa_o_online }}</td>
-                <td>{{ pedido.fecha_creacion }}</td>
-                <td>{{ pedido.get_estado_display }}</td>
-                <td>
-                    <a href="{% url 'pedido_detail' pedido.id %}">Ver detalles</a>
-                    {% if pedido.estado == 'en_preparacion' %}
-                        <form method="post" action="{% url 'pedido_listo' pedido.id %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit">✔️ Marcar Listo</button>
-                        </form>
-                    {% elif pedido.estado == 'listo' %}
-                        <form method="post" action="{% url 'pedido_entregada' pedido.id %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit">📦 Marcar Entregado</button>
-                        </form>
-                    {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5">No hay pedidos en preparación en este momento.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<!-- STAT BAR -->
+<div class="stat-bar">
+    <div class="stat-item">
+        <strong id="stat-total">0</strong> pedidos activos
+    </div>
+    <span class="stat-sep">|</span>
+    <div class="stat-item">
+        <strong id="stat-preparacion">0</strong> en preparación
+    </div>
+    <span class="stat-sep">|</span>
+    <div class="stat-item">
+        <strong id="stat-listos">0</strong> listos para entregar
+    </div>
+    <span class="stat-sep">|</span>
+    <div class="stat-item" id="hora-actual"></div>
+</div>
 
-    <script>
-        // Refresca la página para que la cocina vea los pedidos nuevos confirmados en tiempo real.
-        setTimeout(function() {
-            window.location.reload();
-        }, 10000);
-        // ── CONFIGURACIÓN ──
-        const API_URL = "{% url 'api_pedidos_activos' %}";
-        const UPDATE_INTERVAL = 3000; // 3 segundos
-        const NOTIFICATION_DURATION = 3000; // 3 segundos
-        const RECENT_HIGHLIGHT_DURATION = 7000; // 7 segundos
-        // Inyectar el rol del usuario autenticado desde Django
-        const USER_ROLE = "{{ user_role|default:'' }}";
+<!-- MAIN -->
+<main class="main-content">
+    <div id="pedidos-container" class="pedidos-grid"></div>
+    <div class="empty-state" id="empty-state">
+        <div class="empty-icon">🍳</div>
+        <h2>Sin pedidos en este momento</h2>
+        <p>Cuando lleguen órdenes confirmadas aparecerán aquí automáticamente.</p>
+    </div>
+</main>
 
-        let lastPedidoIds = new Set();
-        let updateTimer = null;
-        let highlightedRecentOrderId = null;
-        let highlightedRecentUntil = 0;
+<script>
+    const API_URL       = "{% url 'api_pedidos_activos' %}";
+    const POLL_MS       = 3000;   // refresco cada 3 s
+    const TOAST_MS      = 3000;
+    const NEW_BADGE_MS  = 7000;
 
-        // ── FUNCIONES AUXILIARES ──
+    let knownIds         = new Set();
+    let seenHighlighted  = new Set(JSON.parse(localStorage.getItem('seenHighlighted') || '[]'));
+    let pollTimer        = null;
+    let highlightId      = null;
+    let highlightUntil   = 0;
 
-        /**
-         * Obtiene el icono según el estado de mesa/cliente
-         */
-        function getIconoMesa(mesaCliente) {
-            if (mesaCliente.toLowerCase().includes('online') || mesaCliente.toLowerCase().includes('delivery')) {
-                return '🚚';
-            }
-            return 'Mesa:';
+    // ── Reloj en vivo ──
+    function tickClock() {
+        const now = new Date();
+        const h   = String(now.getHours()).padStart(2, '0');
+        const m   = String(now.getMinutes()).padStart(2, '0');
+        const s   = String(now.getSeconds()).padStart(2, '0');
+        const el  = document.getElementById('hora-actual');
+        if (el) el.textContent = `${h}:${m}:${s}`;
+    }
+    setInterval(tickClock, 1000);
+    tickClock();
+
+    // ── CSRF ──
+    function getCsrf() {
+        const m = document.cookie.match(/csrftoken=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : '';
+    }
+
+    // ── Toast ──
+    function toast(msg) {
+        const el = document.createElement('div');
+        el.className = 'toast';
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), TOAST_MS);
+    }
+
+    // ── Construir tarjeta ──
+    function buildCard(p) {
+        const isNew  = highlightId === p.id && Date.now() < highlightUntil && !seenHighlighted.has(p.id);
+        const badge  = isNew ? '<span class="badge-nuevo">NUEVA</span>' : '';
+        const estado = p.estado === 'en_preparacion' ? 'En preparación' : 'Listo';
+        const icono  = p.mesa_o_online.toLowerCase().includes('online') ||
+                       p.mesa_o_online.toLowerCase().includes('delivery') ? '🚚' : 'Silla';
+
+        let items = p.items.length
+            ? p.items.map(i =>
+                `<li class="producto-item">
+                    <span class="producto-nombre">${i.producto}</span>
+                    <span class="cantidad-badge">${i.cantidad}x</span>
+                </li>`
+              ).join('')
+            : '<li class="sin-productos">Sin productos</li>';
+
+        let footer = '';
+        if (p.estado === 'en_preparacion') {
+            footer = `<form method="post" action="/ventas/pedidos/${p.id}/listo/" style="flex:1">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${getCsrf()}">
+                        <button type="submit" class="btn-estado btn-listo">✔ listo</button>
+                      </form>`;
+        } else if (p.estado === 'listo') {
+            footer = `<form method="post" action="/ventas/pedidos/${p.id}/entregada/" style="flex:1">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${getCsrf()}">
+                        <button type="submit" class="btn-estado btn-entregada">✓ Entregado</button>
+                      </form>`;
         }
 
-        /**
-         * Obtiene el emoji según el estado del pedido
-         */
-        function getEmojiEstado(estado) {
-            const emojis = {
-                'en_preparacion': '👨‍🍳',
-                'listo': '✅',
-                'pendiente': '⏳',
-                'entregada': '📦',
-                'pagado': '💰',
-            };
-            return emojis[estado] || '📋';
-        }
-
-        /**
-         * Crea una tarjeta HTML para un pedido
-         */
-        function crearTarjetaPedido(pedido) {
-            const iconoMesa = getIconoMesa(pedido.mesa_o_online);
-            const clasesNuevo = pedido.es_nuevo ? 'nuevo' : '';
-            const clasesEstado = pedido.estado;
-            const esRecienteDestacado = (
-                highlightedRecentOrderId === pedido.id &&
-                Date.now() < highlightedRecentUntil
-            );
-            const claseReciente = esRecienteDestacado ? 'reciente-destacado' : '';
-            const badgeRecienteHTML = esRecienteDestacado
-                ? '<span class="badge-reciente">RECIENTE</span>'
-                : '';
-
-            let productosHTML = '';
-            if (pedido.items.length === 0) {
-                productosHTML = '<li class="sin-productos">Sin productos</li>';
-            } else {
-                pedido.items.forEach(item => {
-                    productosHTML += `
-                        <li class="producto-item">
-                            <span class="producto-nombre">${item.producto}</span>
-                            <span class="cantidad-badge">${item.cantidad}x</span>
-                        </li>
-                    `;
-                });
-            }
-
-            let botonesHTML = '';
-            // Solo mostrar botones si el usuario es cocina o admin
-            if (USER_ROLE === 'kitchen' || USER_ROLE === 'admin') {
-                if (pedido.estado === 'en_preparacion') {
-                    botonesHTML = `
-                        <form method="post" action="/ventas/pedidos/${pedido.id}/listo/" style="display: flex; width: 100%;">
-                            <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
-                            <button type="submit" class="btn btn-success">Listo</button>
-                        </form>
-                    `;
-                } else if (pedido.estado === 'listo') {
-                    botonesHTML = `
-                        <form method="post" action="/ventas/pedidos/${pedido.id}/entregada/" style="display: flex; width: 100%;">
-                            <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}">
-                            <button type="submit" class="btn btn-warning">Entregada</button>
-                        </form>
-                    `;
-                }
-            }
-
-            return `
-                <div class="pedido-card ${clasesNuevo} ${clasesEstado} ${claseReciente}">
-                    ${badgeRecienteHTML}
-                    <div class="card-header">
-                        <div class="card-title">
-                            <h2>#${pedido.id}</h2>
-                            <div class="mesa-info">
-                                <span class="mesa-icon">${iconoMesa}</span>
-                                <span>${pedido.mesa_o_online}</span>
-                                <span class="hora">${pedido.hora_formateada}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <ul class="productos-lista">
-                            ${productosHTML}
-                        </ul>
-                    </div>
-                    <div class="card-footer">
-                        ${botonesHTML}
-                    </div>
+        return `
+        <div class="pedido-card ${p.estado}${isNew ? ' nuevo' : ''}">
+            ${badge}
+            <div class="card-header">
+                <div>
+                    <div class="card-id">#${p.id}</div>
+                    <div class="card-mesa">${icono} ${p.mesa_o_online}</div>
                 </div>
-            `;
-        }
+                <div class="card-meta">
+                    <span class="estado-badge ${p.estado}">${estado}</span>
+                    <div style="margin-top:4px">${p.hora_formateada}</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="productos-label">${p.total_items} producto${p.total_items !== 1 ? 's' : ''}</div>
+                <ul class="productos-lista">${items}</ul>
+            </div>
+            <div class="card-footer">${footer}</div>
+        </div>`;
+    }
 
-        /**
-         * Obtiene el token CSRF
-         */
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
+    // ── Actualizar UI ──
+    async function refresh() {
+        try {
+            const resp = await fetch(API_URL);
+            if (!resp.ok) throw new Error(resp.status);
+            const data = await resp.json();
+
+            const container = document.getElementById('pedidos-container');
+            const empty     = document.getElementById('empty-state');
+
+            // Estadísticas
+            document.getElementById('stat-total').textContent       = data.total;
+            document.getElementById('stat-preparacion').textContent = data.pedidos.filter(p => p.estado === 'en_preparacion').length;
+            document.getElementById('stat-listos').textContent      = data.pedidos.filter(p => p.estado === 'listo').length;
+            document.getElementById('last-update-text').textContent = 'act. ' + new Date().toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+
+            if (data.pedidos.length === 0) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                knownIds = new Set();
+                return;
             }
-            return cookieValue;
-        }
+            empty.style.display = 'none';
 
-        /**
-         * Muestra una notificación
-         */
-        function mostrarNotificacion(mensaje) {
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.textContent = mensaje;
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.remove();
-            }, NOTIFICATION_DURATION);
-        }
-
-        /**
-         * Actualiza el contenedor de pedidos
-         */
-        async function actualizarPedidos() {
-            try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
-
-                const container = document.getElementById('pedidos-container');
-                const emptyState = document.getElementById('empty-state');
-
-                if (data.pedidos.length === 0) {
-                    container.innerHTML = '';
-                    emptyState.style.display = 'block';
-                    return;
+            // Detectar nuevas órdenes
+            const nuevos = data.pedidos.filter(p => !knownIds.has(p.id));
+            if (nuevos.length) {
+                if (knownIds.size > 0) {
+                    toast(`🔔 ${nuevos.length} nueva${nuevos.length > 1 ? 's' : ''} orden${nuevos.length > 1 ? 'es' : ''}`);
                 }
-
-                emptyState.style.display = 'none';
-
-                // Detectar nuevos pedidos
-                const nuevosPedidos = data.pedidos.filter(p => !lastPedidoIds.has(p.id));
-                if (nuevosPedidos.length > 0 && lastPedidoIds.size > 0) {
-                    mostrarNotificacion(`🔔 ${nuevosPedidos.length} nueva(s) orden(es)`);
-
-                    // Resaltar solo el pedido más reciente que acaba de aparecer.
-                    const pedidoMasReciente = nuevosPedidos.reduce((actual, siguiente) => {
-                        return new Date(siguiente.fecha_creacion) > new Date(actual.fecha_creacion)
-                            ? siguiente
-                            : actual;
-                    });
-
-                    highlightedRecentOrderId = pedidoMasReciente.id;
-                    highlightedRecentUntil = Date.now() + RECENT_HIGHLIGHT_DURATION;
-
-                    setTimeout(() => {
-                        if (Date.now() >= highlightedRecentUntil) {
-                            highlightedRecentOrderId = null;
-                            actualizarPedidos();
-                        }
-                    }, RECENT_HIGHLIGHT_DURATION + 100);
-                }
-
-                // Actualizar lista de IDs
-                lastPedidoIds = new Set(data.pedidos.map(p => p.id));
-
-                // Renderizar tarjetas (invertidas para mostrar últimas primero)
-                container.innerHTML = data.pedidos.reverse().map(crearTarjetaPedido).join('');
-
-            } catch (error) {
-                console.error('Error al actualizar pedidos:', error);
+                const reciente = nuevos.reduce((a, b) =>
+                    new Date(b.fecha_creacion) > new Date(a.fecha_creacion) ? b : a);
+                highlightId    = reciente.id;
+                highlightUntil = Date.now() + NEW_BADGE_MS;
+                setTimeout(() => { 
+                    seenHighlighted.add(reciente.id);
+                    localStorage.setItem('seenHighlighted', JSON.stringify(Array.from(seenHighlighted)));
+                    highlightId = null;
+                    refresh();
+                }, NEW_BADGE_MS + 100);
             }
+
+            if (highlightId && Date.now() >= highlightUntil) {
+                highlightId = null;
+            }
+
+            knownIds = new Set(data.pedidos.map(p => p.id));
+            // Las más recientes primero
+            container.innerHTML = [...data.pedidos].reverse().map(buildCard).join('');
+
+        } catch (err) {
+            document.getElementById('status-text').textContent = 'sin conexión';
+            console.error('Error cocina poll:', err);
         }
+    }
 
-        /**
-         * Inicia la actualización automática
-         */
-        function iniciarActualizacion() {
-            // Actualizar inmediatamente
-            actualizarPedidos();
+    // ── Polling ──
+    function start() {
+        refresh();
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(refresh, POLL_MS);
+    }
+    function stop() {
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
 
-            // Luego actualizar cada X segundos
-            if (updateTimer) clearInterval(updateTimer);
-            updateTimer = setInterval(actualizarPedidos, UPDATE_INTERVAL);
+    document.addEventListener('DOMContentLoaded', start);
+    document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+    window.addEventListener('beforeunload', stop);
+
+    // Confirmación antes de marcar entregada
+    document.addEventListener('submit', e => {
+        const btn = e.submitter;
+        if (btn && btn.classList.contains('btn-entregada')) {
+            const id = e.target.action.match(/\/pedidos\/(\d+)\//)?.[1];
+            if (!confirm(`¿Marcar pedido #${id || '?'} como entregado?`)) e.preventDefault();
         }
-
-        /**
-         * Detiene la actualización automática
-         */
-        function detenerActualizacion() {
-            if (updateTimer) {
-                clearInterval(updateTimer);
-                updateTimer = null;
-            }
-        }
-
-        // ── EVENTOS ──
-
-        // Confirmación y control de permisos antes de marcar como entregada o listo
-        document.addEventListener('submit', function(e) {
-            const submitButton = e.submitter;
-            // Solo controlar formularios de cambio de estado
-            if (submitButton && (submitButton.classList.contains('btn-warning') || submitButton.classList.contains('btn-success'))) {
-                // Si el usuario no es cocina ni admin, bloquear y notificar
-                if (!(USER_ROLE === 'kitchen' || USER_ROLE === 'admin')) {
-                    e.preventDefault();
-                    mostrarNotificacion('No tienes permiso para cambiar el estado de la orden.');
-                    return false;
-                }
-                // Confirmación para "entregada"
-                if (submitButton.classList.contains('btn-warning')) {
-                    const formAction = e.target.action;
-                    const pedidoId = formAction.match(/\/pedidos\/(\d+)\//)?.[1];
-                    const mensaje = pedidoId
-                        ? `¿Estás seguro de marcar el pedido #${pedidoId} como entregado?`
-                        : '¿Estás seguro de marcar este pedido como entregado?';
-                    const confirmed = confirm(mensaje);
-                    if (!confirmed) {
-                        e.preventDefault();
-                        return false;
-                    }
-                }
-            }
-        });
-
-        // Iniciar cuando el DOM esté listo
-        document.addEventListener('DOMContentLoaded', iniciarActualizacion);
-
-        // Detener cuando la página pierda el foco (ahorrar recursos)
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                detenerActualizacion();
-            } else {
-                iniciarActualizacion();
-            }
-        });
-
-        // Detener al descargar la página
-        window.addEventListener('beforeunload', detenerActualizacion);
-    </script>
+    });
+</script>
 </body>
 </html>

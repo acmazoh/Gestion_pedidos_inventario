@@ -3,130 +3,578 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalle del Pedido</title>
+    <style>
+        :root {
+            --white: #FFFFFF;
+            --green: #4CAF50;
+            --blue: #2196F3;
+            --blue-dark: #1565C0;
+            --purple: #9C27B0;
+            --red: #F44336;
+            --black: #000000;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --bg: #f5f9ff;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at 12% 0%, rgba(33, 150, 243, 0.16), transparent 42%),
+                radial-gradient(circle at 92% 0%, rgba(156, 39, 176, 0.1), transparent 34%),
+                var(--bg);
+            color: #111827;
+            min-height: 100vh;
+        }
+
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--white);
+            border-bottom: 1px solid var(--line);
+            box-shadow: 0 2px 10px rgba(21, 101, 192, 0.08);
+            padding: 10px 20px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand { font-size: 18px; font-weight: 800; color: var(--black); }
+        .brand span { color: var(--purple); }
+
+        .nav-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .nav-end {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .btn-nav {
+            text-decoration: none;
+            border: 1px solid var(--blue);
+            color: var(--blue);
+            background: var(--white);
+            border-radius: 8px;
+            padding: 5px 11px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: 0.18s ease;
+            cursor: pointer;
+        }
+        .btn-nav:hover, .btn-nav.active { background: #eaf3ff; }
+
+        .btn-logout {
+            border: 1px solid var(--purple);
+            background: var(--white);
+            color: var(--purple);
+            border-radius: 8px;
+            padding: 5px 11px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .btn-logout:hover { background: #f4e8f8; }
+
+        .wrap {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 18px 12px 28px;
+        }
+
+        .messages {
+            margin-bottom: 12px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .msg {
+            padding: 11px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .msg.success {
+            background: #e8f5e9;
+            color: #256029;
+            border: 1px solid #43a047;
+        }
+
+        .msg.error {
+            background: #ffebee;
+            color: #b71c1c;
+            border: 1px solid #e53935;
+        }
+
+        .msg.info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #1976d2;
+        }
+
+        .title-card {
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-left: 4px solid var(--blue-dark);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 6px 18px rgba(2, 19, 45, 0.06);
+        }
+
+        .title-card h1 {
+            font-size: 28px;
+            color: var(--blue-dark);
+            line-height: 1.1;
+            margin-bottom: 8px;
+        }
+
+        .status-pill {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border: 1px solid transparent;
+        }
+
+        .status-pill.pendiente {
+            background: #f5e9f9;
+            border-color: #e9d4f1;
+            color: #7b1fa2;
+        }
+
+        .status-pill.en_preparacion {
+            background: #eaf3ff;
+            border-color: #d3e5ff;
+            color: var(--blue-dark);
+        }
+
+        .status-pill.listo,
+        .status-pill.pagado {
+            background: #e8f5e9;
+            border-color: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .shortage {
+            border: 1px solid #f1b8b8;
+            background: #fff4f4;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 14px;
+            color: #7a1616;
+        }
+
+        .shortage h3 {
+            margin-bottom: 8px;
+            color: #b42318;
+            font-size: 16px;
+        }
+
+        .shortage ul {
+            margin-left: 18px;
+            margin-bottom: 8px;
+            display: grid;
+            gap: 5px;
+            font-size: 13px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.45fr .9fr;
+            gap: 14px;
+            align-items: start;
+        }
+
+        .panel {
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            box-shadow: 0 6px 18px rgba(2, 19, 45, 0.05);
+            overflow: hidden;
+        }
+
+        .panel-head {
+            padding: 12px 14px;
+            border-bottom: 1px solid #edf2f7;
+            background: #fbfdff;
+        }
+
+        .panel-head h2 {
+            font-size: 18px;
+            color: #1f2937;
+        }
+
+        .panel-body {
+            padding: 12px 14px 14px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            border-bottom: 1px solid #edf2f7;
+            padding: 10px 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--muted);
+            font-weight: 700;
+            background: #f8fbff;
+        }
+
+        .qty-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .btn-mini {
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            color: var(--blue-dark);
+            border-radius: 7px;
+            min-width: 30px;
+            height: 30px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-mini:hover {
+            background: #dbeafe;
+        }
+
+        .btn-mini.danger {
+            border-color: #fecaca;
+            background: #fff1f2;
+            color: #b91c1c;
+            padding: 0 8px;
+        }
+
+        .totals {
+            margin-top: 12px;
+            background: #f8fbff;
+            border: 1px solid #dbeafe;
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: grid;
+            gap: 5px;
+            font-size: 14px;
+        }
+
+        .totals .row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .totals .label {
+            color: var(--blue-dark);
+            font-weight: 700;
+        }
+
+        .totals .value {
+            color: var(--black);
+            font-weight: 600;
+        }
+
+        .totals .row.total .value {
+            color: var(--green);
+            font-weight: 800;
+            font-size: 16px;
+        }
+
+        .form-field {
+            margin-bottom: 12px;
+        }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .form-field input,
+        .form-field select {
+            width: 100%;
+            border: 1px solid #cfd8e3;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-field input:focus,
+        .form-field select:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.18);
+        }
+
+        .btn-main {
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            padding: 11px 12px;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .btn-main.primary {
+            background: var(--blue);
+            color: var(--white);
+            margin-bottom: 8px;
+        }
+
+        .btn-main.primary:hover {
+            background: var(--blue-dark);
+        }
+
+        .btn-main.success {
+            background: var(--green);
+            color: var(--white);
+        }
+
+        .btn-main.success:hover {
+            filter: brightness(0.95);
+        }
+
+        .locked {
+            background: #f8fafc;
+            border: 1px dashed #d6dce4;
+            border-radius: 12px;
+            padding: 10px;
+            font-size: 13px;
+            color: #4b5563;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 18px 8px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 980px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .title-card h1 {
+                font-size: 23px;
+            }
+
+            .app-header {
+                padding: 10px 12px;
+            }
+
+            .wrap {
+                padding: 14px 9px 22px;
+            }
+        }
+    </style>
 </head>
 <body>
-        {% if messages %}
-        <div style="margin: 16px 0;">
-            {% for message in messages %}
-                <div style="padding:10px; border-radius:4px; margin-bottom:8px; {% if message.tags == 'success' %}background:#e8f5e9; color:#256029; border:1px solid #43a047;{% elif message.tags == 'error' %}background:#ffebee; color:#b71c1c; border:1px solid #e53935;{% else %}background:#e3f2fd; color:#1565c0; border:1px solid #1976d2;{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
+    <header class="app-header">
+        <div class="brand">🧾 Restin <span>Pedido</span></div>
+        <nav class="nav-center">
+            <a href="{% url 'venta_list' %}" class="btn-nav">Ventas</a>
+            <a href="{% url 'pedido_list' %}" class="btn-nav active">Pedidos</a>
+            <a href="{% url 'pedido_create' %}" class="btn-nav">Nuevo Pedido</a>
+            <a href="{% url 'cocina_dashboard' %}" class="btn-nav">Cocina</a>
+            <a href="{% url 'historial_ventas' %}" class="btn-nav">Historial</a>
+            <a href="/products/" class="btn-nav">Productos</a>
+        </nav>
+        <div class="nav-end">
+            <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-logout">Salir ({{ request.user.username }})</button>
+            </form>
         </div>
+    </header>
+
+    <main class="wrap">
+        {% if messages %}
+            <section class="messages">
+                {% for message in messages %}
+                    <div class="msg {% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% else %}info{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </section>
         {% endif %}
-    <h1>Pedido {{ pedido.id }} - {{ pedido.mesa_o_online }}</h1>
 
-    <nav>
-        <a href="{% url 'pedido_list' %}">Volver a la Lista de Pedidos</a> |
-        <a href="{% url 'venta_list' %}">Volver a Productos</a>
-    </nav>
+        <section class="title-card">
+            <h1>Pedido #{{ pedido.id }} - {{ pedido.mesa_o_online }}</h1>
+            <span class="status-pill {{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
+        </section>
 
-    {% if confirm_errors %}
-    <div style="border:1px solid red; padding:12px; margin:12px 0; background:#ffe6e6;">
-        <strong>Imposible confirmar pedido:</strong>
-        <ul>
-            {% for err in confirm_errors %}
-            <li>
-                <strong>{{ err.ingrediente.nombre }}</strong> (productos: {{ err.productos|join:", " }}): falta <strong>{{ err.missing }}</strong> unidades
-                (Disponible: {{ err.available }}, Necesarias: {{ err.required }})
-            </li>
-            {% endfor %}
-        </ul>
-        <p>Por favor ajuste el pedido o actualice el inventario antes de confirmar.</p>
-    </div>
-    {% endif %}
-
-    <h2>Productos agregados</h2>
-    <table border="1" cellpadding="8" cellspacing="0">
-        <thead>
-            <tr>
-                <th>Producto</th>
-                <th>Precio unitario</th>
-                <th>Cantidad</th>
-                <th>Subtotal</th>
-                {% if pedido.estado == 'pendiente' %}
-                <th>Acciones</th>
-                {% endif %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in items %}
-            <tr>
-                <td>{{ item.producto.nombre }}</td>
-                <td>{{ item.producto.precio }}</td>
-                <td>{{ item.cantidad }}</td>
-                <td>{{ item.subtotal }}</td>
-=======
-                <td>${{ item.producto.precio|intcomma }}</td>
-                <td class="item-qty">{{ item.cantidad }}</td>
-                <td class="item-subtotal">${{ item.subtotal|intcomma }}</td>
-                {% if pedido.estado == 'pendiente' %}
-                <td>
-                    <form method="post" action="{% url 'pedido_item_increment' pedido.id item.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" name="action" value="increment">+</button>
-                    </form>
-                    <form method="post" action="{% url 'pedido_item_decrement' pedido.id item.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" name="action" value="decrement">-</button>
-                    </form>
-                    <form method="post" action="{% url 'pedido_item_delete' pedido.id item.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit">Eliminar</button>
-                    </form>
-                </td>
-                {% endif %}
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="{% if pedido.estado == 'pendiente' %}5{% else %}4{% endif %}">No hay productos agregados a este pedido.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-        {% if items %}
-        <tfoot>
-            <tr>
-                <td colspan="{% if pedido.estado == 'pendiente' %}4{% else %}3{% endif %}" style="text-align: right;"><strong>Total:</strong></td>
-                <td><strong>{{ total }}</strong></td>
-            </tr>
-        </tfoot>
+        {% if confirm_errors %}
+            <section class="shortage">
+                <h3>Imposible confirmar pedido</h3>
+                <ul>
+                    {% for err in confirm_errors %}
+                        <li>
+                            <strong>{{ err.ingrediente.nombre }}</strong> (productos: {{ err.productos|join:", " }}):
+                            faltan <strong>{{ err.missing }}</strong> unidades
+                            (Disponible: {{ err.available }}, Necesarias: {{ err.required }})
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p>Por favor ajusta el pedido o actualiza el inventario antes de confirmar.</p>
+            </section>
         {% endif %}
-    </table>
 
-    <h2>Confirmar pedido</h2>
-=======
+        <section class="grid">
+            <article class="panel">
+                <div class="panel-head">
+                    <h2>Productos agregados</h2>
+                </div>
+                <div class="panel-body">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Precio</th>
+                                    <th>Cantidad</th>
+                                    <th>Subtotal</th>
+                                    {% if pedido.estado == 'pendiente' %}
+                                        <th>Acciones</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                    <tr>
+                                        <td>{{ item.producto.nombre }}</td>
+                                        <td>${{ item.producto.precio|intcomma }}</td>
+                                        <td>{{ item.cantidad }}</td>
+                                        <td>${{ item.subtotal|intcomma }}</td>
+                                        {% if pedido.estado == 'pendiente' %}
+                                            <td>
+                                                <div class="qty-controls">
+                                                    <form method="post" action="{% url 'pedido_item_increment' pedido.id item.id %}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" name="action" value="increment" class="btn-mini">+</button>
+                                                    </form>
+                                                    <form method="post" action="{% url 'pedido_item_decrement' pedido.id item.id %}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" name="action" value="decrement" class="btn-mini">-</button>
+                                                    </form>
+                                                    <form method="post" action="{% url 'pedido_item_delete' pedido.id item.id %}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn-mini danger">Eliminar</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        {% endif %}
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="{% if pedido.estado == 'pendiente' %}5{% else %}4{% endif %}">
+                                            <div class="empty">No hay productos agregados a este pedido.</div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
 
-    <div id="total-display" style="margin-top:18px;">
-        <table style="font-size:16px;"> <!-- igual que celdas de productos -->
-            <tr>
-                <td style="font-weight:bold; color:#1565C0;">Subtotal:</td>
-                <td style="text-align:right; color:#000; font-weight:normal;">${{ subtotal|intcomma }}</td>
-            </tr>
-            <tr>
-                <td style="font-weight:bold; color:#1565C0;">Impuesto ({{ tax_rate|floatformat:0 }}%):</td>
-                <td style="text-align:right; color:#000; font-weight:normal;">${{ impuesto|intcomma }}</td>
-            </tr>
-            <tr>
-                <td style="font-weight:bold; color:#1565C0;">Total:</td>
-                <td style="text-align:right; color:#000; font-weight:bold;">${{ total|intcomma }}</td>
-            </tr>
-        </table>
-    </div>
->>>>>>> mejoras-backend
+                    <div class="totals">
+                        <div class="row">
+                            <span class="label">Subtotal</span>
+                            <span class="value">${{ subtotal|intcomma }}</span>
+                        </div>
+                        <div class="row">
+                            <span class="label">Impuesto ({{ tax_rate|floatformat:0 }}%)</span>
+                            <span class="value">${{ impuesto|intcomma }}</span>
+                        </div>
+                        <div class="row total">
+                            <span class="label">Total</span>
+                            <span class="value">${{ total|intcomma }}</span>
+                        </div>
+                    </div>
+                </div>
+            </article>
 
-    {% if pedido.estado == 'pendiente' and items %}
-    <form method="post" action="{% url 'pedido_confirm' pedido.id %}">
-        {% csrf_token %}
-        <button type="submit">enviar a cocina</button>
-    </form>    {% elif pedido.estado != 'pendiente' %}
-    <p>Estado actual: <strong>{{ pedido.get_estado_display }}</strong></p>    {% endif %}
+            <aside class="panel">
+                <div class="panel-head">
+                    <h2>Acciones del pedido</h2>
+                </div>
+                <div class="panel-body">
+                    <h3 style="font-size:15px; margin-bottom:10px; color:#1f2937;">Agregar producto</h3>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-field">
+                            <label for="{{ form.producto.id_for_label }}">{{ form.producto.label }}</label>
+                            {{ form.producto }}
+                        </div>
+                        <div class="form-field">
+                            <label for="{{ form.cantidad.id_for_label }}">{{ form.cantidad.label }}</label>
+                            {{ form.cantidad }}
+                        </div>
+                        <button type="submit" class="btn-main primary">Agregar al pedido</button>
+                    </form>
 
-    <h2>Agregar producto</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Agregar</button>
-    </form>
+                    <h3 style="font-size:15px; margin:12px 0 10px; color:#1f2937;">Confirmar pedido</h3>
+                    {% if pedido.estado == 'pendiente' and items %}
+                        <form method="post" action="{% url 'pedido_confirm' pedido.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-main success">Enviar a cocina</button>
+                        </form>
+                    {% elif pedido.estado != 'pendiente' %}
+                        <div class="locked">
+                            Estado actual: <strong>{{ pedido.get_estado_display }}</strong>.
+                            Este pedido ya no permite modificaciones.
+                        </div>
+                    {% else %}
+                        <div class="locked">
+                            Agrega al menos un producto para poder enviarlo a cocina.
+                        </div>
+                    {% endif %}
+                </div>
+            </aside>
+        </section>
+    </main>
 </body>
 </html>

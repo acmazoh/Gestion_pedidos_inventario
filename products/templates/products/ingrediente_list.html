@@ -10,12 +10,16 @@
     <div class="page-shell">
         <div class="page-container stack">
             <nav class="top-nav">
+                <div class="nav-spacer"></div>
                 <div class="nav-links">
                     <a class="nav-link is-active" href="{% url 'ingrediente_list' %}">Ingredientes</a>
                     <a class="nav-link" href="{% url 'movimiento_list' %}">Movimientos</a>
                     <a class="nav-link" href="{% url 'producto_list' %}">Productos</a>
                 </div>
-                <a href="{% url 'ingrediente_create' %}" class="btn btn-primary">Agregar ingrediente</a>
+                <div class="nav-end">
+                    <a href="{% url 'venta_list' %}" class="btn btn-ghost">&larr; Volver a ventas</a>
+                    <a href="{% url 'ingrediente_create' %}" class="btn btn-primary">Agregar ingrediente</a>
+                </div>
             </nav>
 
             <header class="page-header">

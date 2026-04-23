@@ -1,15 +1,52 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>{% if form.instance.pk %}Editar{% else %}Crear{% endif %} Producto</title>
+    <meta charset="UTF-8">
+    <title>{% if form.instance.pk %}Editar{% else %}Nuevo{% endif %} producto</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'ventas/restin-theme.css' %}">
 </head>
 <body>
-    <h1>{% if form.instance.pk %}Editar{% else %}Crear{% endif %} Producto</h1>
-    <form method="post">
+<div class="page-shell">
+  <div class="page-container">
+
+    <nav class="top-nav">
+      <div class="nav-links">
+        <a class="nav-link" href="{% url 'ingrediente_list' %}">Ingredientes</a>
+        <a class="nav-link" href="{% url 'movimiento_list' %}">Movimientos</a>
+        <a class="nav-link is-active" href="{% url 'producto_list' %}">Productos</a>
+      </div>
+    </nav>
+
+    <header class="page-header">
+      <h1 class="page-title">{% if form.instance.pk %}Editar producto{% else %}Nuevo producto{% endif %}</h1>
+      <p class="page-subtitle">Completa los datos del producto para el catálogo de ventas del restaurante.</p>
+    </header>
+
+    <section class="page-card">
+      <form method="post" class="stack">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar</button>
-    </form>
-    <a href="{% url 'producto_list' %}">Volver</a>
+        {% for field in form %}
+          <div class="stack" style="gap:.3rem">
+            <label style="font-weight:600;font-size:.9rem;color:#374151">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+              <small style="color:#6b7280">{{ field.help_text }}</small>
+            {% endif %}
+            {% for error in field.errors %}
+              <small style="color:#F44336">{{ error }}</small>
+            {% endfor %}
+          </div>
+        {% endfor %}
+        <div class="actions-row" style="padding-top:.5rem">
+          <button type="submit" class="btn btn-primary">Guardar producto</button>
+          <a href="{% url 'producto_list' %}" class="btn btn-ghost">Cancelar</a>
+        </div>
+      </form>
+    </section>
+
+  </div>
+</div>
 </body>
 </html>

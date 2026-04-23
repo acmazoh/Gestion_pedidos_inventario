@@ -19,6 +19,7 @@ class Pedido(models.Model):
         ('pendiente', 'Pendiente'),
         ('en_preparacion', 'En Preparación'),
         ('listo', 'Listo'),
+        ('entregada', 'Entregada'),
         ('pagado', 'Pagado'),
     ]
 

@@ -1,89 +1,404 @@
 {% load humanize %}
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historial de Ventas</title>
     <style>
-        body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 0 16px; background:#FFFFFF; color:#000000; }
-        nav { margin-bottom: 16px; }
-        .logout-btn { float: right; }
-        nav a { color:#2196F3; font-weight:bold; text-decoration:none; }
-        nav a:hover { color:#1565C0; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #d0d7de; padding: 8px; text-align: left; }
-        th { background: #e8f1fd; color:#1565C0; }
-        button[type="submit"] { background:#2196F3; color:#fff; border:none; border-radius:4px; padding:6px 14px; cursor:pointer; }
-        button[type="submit"]:hover { background:#1565C0; }
+        :root {
+            --white: #FFFFFF;
+            --green: #4CAF50;
+            --blue: #2196F3;
+            --blue-dark: #1565C0;
+            --purple: #9C27B0;
+            --red: #F44336;
+            --black: #000000;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --bg: #f4f8ff;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #111827;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 15% -10%, rgba(33, 150, 243, 0.2), transparent 45%),
+                radial-gradient(circle at 90% 0%, rgba(156, 39, 176, 0.12), transparent 35%),
+                var(--bg);
+        }
+
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--white);
+            border-bottom: 1px solid var(--line);
+            box-shadow: 0 2px 10px rgba(21, 101, 192, 0.08);
+            padding: 10px 20px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand { font-size: 18px; font-weight: 800; color: var(--black); }
+        .brand span { color: var(--purple); }
+
+        .nav-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .nav-end {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .btn-nav {
+            text-decoration: none;
+            border: 1px solid var(--blue);
+            color: var(--blue);
+            background: var(--white);
+            border-radius: 8px;
+            padding: 5px 11px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: 0.18s ease;
+            cursor: pointer;
+        }
+        .btn-nav:hover, .btn-nav.active { background: #eaf3ff; }
+
+        .btn-logout {
+            border: 1px solid var(--purple);
+            background: var(--white);
+            color: var(--purple);
+            border-radius: 8px;
+            padding: 5px 11px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .btn-logout:hover { background: #f4e8f8; }
+
+        .page {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 18px 12px 28px;
+        }
+
+        .title-wrap {
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            font-size: 31px;
+            font-weight: 800;
+            color: var(--blue-dark);
+            line-height: 1.1;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .filters {
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px;
+            box-shadow: 0 6px 18px rgba(2, 19, 45, 0.05);
+            margin-bottom: 12px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 10px;
+            align-items: end;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .field input[type="date"] {
+            width: 100%;
+            border: 1px solid #cfd8e3;
+            border-radius: 10px;
+            padding: 9px 10px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .field input[type="date"]:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.16);
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            text-decoration: none;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-filter {
+            background: var(--blue);
+            color: var(--white);
+        }
+
+        .btn-filter:hover {
+            background: var(--blue-dark);
+        }
+
+        .btn-link {
+            background: #f5e9f9;
+            color: var(--purple);
+            border: 1px solid #e7d2ee;
+        }
+
+        .btn-link:hover {
+            background: #efdff4;
+        }
+
+        .kpi {
+            background: #eff8f0;
+            border: 1px solid #d1ebd4;
+            color: #1f6b26;
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .table-card {
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 6px 18px rgba(2, 19, 45, 0.05);
+        }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 780px;
+        }
+
+        th, td {
+            border-bottom: 1px solid #edf2f7;
+            padding: 10px 10px;
+            text-align: left;
+            vertical-align: top;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f8fbff;
+            color: var(--blue-dark);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            font-weight: 800;
+        }
+
+        tr:hover td {
+            background: #fbfdff;
+        }
+
+        .total-cell {
+            color: var(--green);
+            font-weight: 800;
+        }
+
+        .empty {
+            background: var(--white);
+            border: 1px dashed #cfd8e3;
+            border-radius: 12px;
+            padding: 36px 16px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .pager {
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #4b5563;
+        }
+
+        .pager a {
+            color: var(--blue);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .pager a:hover {
+            color: var(--blue-dark);
+        }
+
+        @media (max-width: 700px) {
+            .app-header {
+                padding: 10px 12px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .page {
+                padding: 14px 9px 22px;
+            }
+        }
     </style>
 </head>
 <body>
-    <nav>
-        <a href="{% url 'pedido_list' %}">← Pedidos</a> |
-        <a href="{% url 'cocina_dashboard' %}">Cocina</a>
-        <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
-            {% csrf_token %}
-            <button type="submit" style="background:none;border:none;color:#9C27B0;cursor:pointer;padding:0;font-weight:bold;">Cerrar Sesión ({{ request.user.username }})</button>
-        </form>
-    </nav>
+    <header class="app-header">
+        <div class="brand">📊 Restin <span>Historial</span></div>
+        <nav class="nav-center">
+            <a href="{% url 'venta_list' %}" class="btn-nav">Ventas</a>
+            <a href="{% url 'pedido_list' %}" class="btn-nav">Pedidos</a>
+            <a href="{% url 'pedido_create' %}" class="btn-nav">Nuevo Pedido</a>
+            <a href="{% url 'cocina_dashboard' %}" class="btn-nav">Cocina</a>
+            <a href="{% url 'historial_ventas' %}" class="btn-nav active">Historial</a>
+            <a href="/products/" class="btn-nav">Productos</a>
+        </nav>
+        <div class="nav-end">
+            <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-logout">Salir ({{ request.user.username }})</button>
+            </form>
+        </div>
+    </header>
 
-    <h1>Historial de Ventas</h1>
+    <main class="page">
+        <section class="title-wrap">
+            <h1>Historial de Ventas</h1>
+            <p class="subtitle">Consulta transacciones, filtra por fecha y exporta el consolidado a CSV.</p>
+        </section>
 
-    <form method="get" style="margin: 12px 0;">
-        <label>Desde: <input type="date" name="desde" value="{{ desde }}"></label>
-        &nbsp;
-        <label>Hasta: <input type="date" name="hasta" value="{{ hasta }}"></label>
-        &nbsp;
-        <button type="submit">Filtrar</button>
-        {% if desde or hasta %}<a href="{% url 'historial_ventas' %}" style="color:#9C27B0; font-weight:bold;">Limpiar</a>{% endif %}
-    </form>
+        <section class="filters">
+            <form method="get">
+                <div class="filters-grid">
+                    <div class="field">
+                        <label for="desde">Desde</label>
+                        <input id="desde" type="date" name="desde" value="{{ desde }}">
+                    </div>
+                    <div class="field">
+                        <label for="hasta">Hasta</label>
+                        <input id="hasta" type="date" name="hasta" value="{{ hasta }}">
+                    </div>
+                    <div class="actions">
+                        <button type="submit" class="btn btn-filter">Filtrar</button>
+                        {% if desde or hasta %}
+                            <a href="{% url 'historial_ventas' %}" class="btn btn-link">Limpiar</a>
+                        {% endif %}
+                        <a href="{% url 'historial_ventas_csv' %}{% if desde or hasta %}?desde={{ desde }}&hasta={{ hasta }}{% endif %}" class="btn btn-link">Exportar CSV</a>
+                    </div>
+                </div>
+            </form>
+        </section>
 
-    <a href="{% url 'historial_ventas_csv' %}{% if desde or hasta %}?desde={{ desde }}&hasta={{ hasta }}{% endif %}" style="color:#9C27B0; font-weight:bold;">
-        ⬇ Exportar CSV
-    </a>
+        {% if transacciones %}
+            <section class="kpi">
+                Total del periodo: ${{ total_periodo|intcomma }}
+            </section>
 
-    {% if transacciones %}
-    <p><strong style="color:#4CAF50;">Total del período: ${{ total_periodo|intcomma }}</strong></p>
-    <table>
-        <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>Pedido</th>
-                <th>Mesa / Cliente</th>
-                <th>Productos</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for t in transacciones %}
-            <tr>
-                <td>{{ t.fecha|date:"d/m/Y H:i" }}</td>
-                <td>#{{ t.pedido.id }}</td>
-                <td>{{ t.pedido.mesa_o_online }}</td>
-                <td>
-                    {% for item in t.items_pedido %}
-                        {{ item.producto.nombre }} x{{ item.cantidad }}{% if not forloop.last %}, {% endif %}
-                    {% endfor %}
-                </td>
-                <td>${{ t.total|intcomma }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            <section class="table-card">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Pedido</th>
+                                <th>Mesa / Cliente</th>
+                                <th>Productos</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in transacciones %}
+                                <tr>
+                                    <td>{{ t.fecha|date:"d/m/Y H:i" }}</td>
+                                    <td>#{{ t.pedido.id }}</td>
+                                    <td>{{ t.pedido.mesa_o_online }}</td>
+                                    <td>
+                                        {% for item in t.pedido.items.all %}
+                                            {{ item.producto.nombre }} x{{ item.cantidad }}{% if not forloop.last %}, {% endif %}
+                                        {% empty %}
+                                            Sin productos
+                                        {% endfor %}
+                                    </td>
+                                    <td class="total-cell">${{ t.total|intcomma }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-    {% if is_paginated %}
-    <div>
-        {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}&desde={{ desde }}&hasta={{ hasta }}" style="color:#2196F3; font-weight:bold;">Anterior</a>
+            {% if is_paginated %}
+                <div class="pager">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}&desde={{ desde }}&hasta={{ hasta }}">Anterior</a>
+                    {% endif %}
+                    <span>Pagina {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&desde={{ desde }}&hasta={{ hasta }}">Siguiente</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
+            <section class="empty">
+                No hay ventas registradas en el periodo seleccionado.
+            </section>
         {% endif %}
-        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}&desde={{ desde }}&hasta={{ hasta }}" style="color:#2196F3; font-weight:bold;">Siguiente</a>
-        {% endif %}
-    </div>
-    {% endif %}
-
-    {% else %}
-    <p>No hay ventas registradas en ese período.</p>
-    {% endif %}
+    </main>
 </body>
 </html>

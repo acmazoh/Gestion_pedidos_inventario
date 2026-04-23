@@ -1,19 +1,114 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
     <title>Gestión de Productos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'ventas/restin-theme.css' %}">
+    <style>
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        .product-card {
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            padding: 1.25rem 1.25rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,.06);
+            transition: box-shadow .2s;
+        }
+        .product-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.1); }
+        .product-card-name { font-size: 1.05rem; font-weight: 700; color: #111; }
+        .product-card-cat { font-size: .8rem; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; }
+        .product-card-price { font-size: 1.3rem; font-weight: 800; color: #1565C0; }
+        .product-card-desc { font-size: .85rem; color: #6b7280; flex: 1; }
+        .product-card-footer { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding-top: .5rem; border-top: 1px solid #f3f4f6; }
+        .badge-disponible { background: #e8f5e9; color: #2e7d32; font-size: .75rem; font-weight: 600; border-radius: 999px; padding: 2px 10px; }
+        .badge-nodisponible { background: #fce4ec; color: #c62828; font-size: .75rem; font-weight: 600; border-radius: 999px; padding: 2px 10px; }
+        .kpi-bar { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .kpi-chip { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: .6rem 1.2rem; font-size: .85rem; color: #374151; }
+        .kpi-chip strong { display: block; font-size: 1.4rem; font-weight: 800; color: #111; }
+    </style>
 </head>
 <body>
-    <h1>Productos</h1>
-    <a href="{% url 'producto_create' %}">Crear Nuevo Producto</a>
-    <ul>
-        {% for producto in productos %}
-        <li>
-            {{ producto.nombre }} - {{ producto.categoria }} - ${{ producto.precio }}
-            <a href="{% url 'producto_update' producto.pk %}">Editar</a>
-            <a href="{% url 'producto_delete' producto.pk %}">Eliminar</a>
-        </li>
-        {% endfor %}
-    </ul>
+<div class="page-shell">
+  <div class="page-container stack">
+
+    <nav class="top-nav">
+      <div class="nav-spacer"></div>
+      <div class="nav-links">
+        <a class="nav-link" href="{% url 'ingrediente_list' %}">Ingredientes</a>
+        <a class="nav-link" href="{% url 'movimiento_list' %}">Movimientos</a>
+        <a class="nav-link is-active" href="{% url 'producto_list' %}">Productos</a>
+      </div>
+      <div class="nav-end">
+        <a href="{% url 'venta_list' %}" class="btn btn-ghost">&larr; Volver a ventas</a>
+        <a href="{% url 'producto_create' %}" class="btn btn-primary">+ Nuevo producto</a>
+      </div>
+    </nav>
+
+    <header class="page-header">
+      <h1 class="page-title">Catálogo de productos</h1>
+      <p class="page-subtitle">Administra los productos disponibles para ventas: precio, categoría y disponibilidad.</p>
+    </header>
+
+    <div class="kpi-bar">
+      <div class="kpi-chip">
+        <strong>{{ productos|length }}</strong>
+        Total productos
+      </div>
+      <div class="kpi-chip">
+        <strong>{{ productos_disponibles }}</strong>
+        Disponibles
+      </div>
+      <div class="kpi-chip">
+        <strong>{{ productos_nodisponibles }}</strong>
+        No disponibles
+      </div>
+    </div>
+
+    {% if productos %}
+    <div class="product-grid">
+      {% for producto in productos %}
+      <div class="product-card">
+        <div>
+          <div class="product-card-cat">{{ producto.categoria }}</div>
+          <div class="product-card-name">{{ producto.nombre }}</div>
+        </div>
+        {% if producto.descripcion %}
+          <div class="product-card-desc">{{ producto.descripcion }}</div>
+        {% endif %}
+        <div class="product-card-price">${{ producto.precio }}</div>
+        <div class="product-card-footer">
+          {% if producto.disponible %}
+            <span class="badge-disponible">Disponible</span>
+          {% else %}
+            <span class="badge-nodisponible">No disponible</span>
+          {% endif %}
+          <div class="actions-row">
+            <a href="{% url 'producto_update' producto.pk %}" class="btn btn-ghost">Editar</a>
+            <a href="{% url 'producto_delete' producto.pk %}" class="btn btn-danger">Eliminar</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <section class="page-card">
+      <div class="empty-state">
+        <h3>Sin productos</h3>
+        <p>No hay productos registrados. <a href="{% url 'producto_create' %}">Crea el primero.</a></p>
+      </div>
+    </section>
+    {% endif %}
+
+  </div>
+</div>
 </body>
 </html>

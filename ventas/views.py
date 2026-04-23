@@ -1,5 +1,5 @@
 # Exportar historial de ventas a CSV
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 import csv
 
 def historial_ventas_csv(request):
@@ -34,6 +34,7 @@ from django.views import View
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView
 from django.urls import reverse_lazy
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
 from django.db.models import Sum
@@ -143,8 +144,7 @@ class PedidoListView(LoginRequiredMixin, ListView):
     context_object_name = 'pedidos'
 
     def get_queryset(self):
-        # Mostrar solo los pedidos del usuario autenticado
-        return Pedido.objects.filter(creado_por=self.request.user).order_by('-fecha_creacion')
+        return Pedido.objects.exclude(estado='pagado').order_by('-fecha_creacion')
 
 
 class PedidoDetailView(LoginRequiredMixin, ListView):
@@ -155,7 +155,7 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
     def get(self, request, pk, *args, **kwargs):
         from decimal import Decimal, ROUND_HALF_UP
         from django.conf import settings
-        pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
+        pedido = get_object_or_404(Pedido, pk=pk)
         form = PedidoProductoForm()
         items = list(pedido.items.select_related('producto'))
         for item in items:
@@ -179,7 +179,7 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
     def post(self, request, pk, *args, **kwargs):
         from decimal import Decimal, ROUND_HALF_UP
         from django.conf import settings
-        pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
+        pedido = get_object_or_404(Pedido, pk=pk)
         form = PedidoProductoForm(request.POST)
         if form.is_valid():
             producto = form.cleaned_data['producto']
@@ -213,7 +213,7 @@ class PedidoDetailView(LoginRequiredMixin, ListView):
 
 class PedidoProductoDeleteView(LoginRequiredMixin, View):
     def post(self, request, pedido_pk, item_pk, *args, **kwargs):
-        pedido = get_object_or_404(Pedido, pk=pedido_pk, creado_por=request.user)
+        pedido = get_object_or_404(Pedido, pk=pedido_pk)
         if pedido.estado != 'pendiente':
             return redirect('pedido_detail', pk=pedido_pk)
         item = get_object_or_404(PedidoProducto, pk=item_pk, pedido=pedido)
@@ -223,7 +223,7 @@ class PedidoProductoDeleteView(LoginRequiredMixin, View):
 
 class PedidoProductoQuantityUpdateView(LoginRequiredMixin, View):
     def post(self, request, pedido_pk, item_pk, *args, **kwargs):
-        pedido = get_object_or_404(Pedido, pk=pedido_pk, creado_por=request.user)
+        pedido = get_object_or_404(Pedido, pk=pedido_pk)
         if pedido.estado != 'pendiente':
             return redirect('pedido_detail', pk=pedido_pk)
         item = get_object_or_404(PedidoProducto, pk=item_pk, pedido=pedido)
@@ -244,10 +244,14 @@ class PedidoProductoQuantityUpdateView(LoginRequiredMixin, View):
 
 class PedidoConfirmarView(LoginRequiredMixin, View):
     def post(self, request, pk, *args, **kwargs):
-        pedido = get_object_or_404(Pedido, pk=pk, creado_por=request.user)
+        pedido = get_object_or_404(Pedido, pk=pk)
 
-        # Solo puede confirmarse un pedido pendiente con al menos un producto.
-        if pedido.estado != 'pendiente' or not pedido.items.exists():
+        if pedido.estado != 'pendiente':
+            messages.error(request, 'El pedido no puede modificarse en su estado actual.')
+            return redirect('pedido_detail', pk=pk)
+
+        if not pedido.items.exists():
+            messages.error(request, 'La orden está vacía y no puede confirmarse.')
             return redirect('pedido_detail', pk=pk)
 
         # Calcular requisitos de ingredientes para el pedido completo
@@ -303,8 +307,6 @@ class PedidoConfirmarView(LoginRequiredMixin, View):
         return redirect('pedido_detail', pk=pk)
 
 
-<<<<<<< HEAD
-=======
 # ── RF-08: Vista de Cocina en Tiempo Real ────────────────────────────────────
 
 class PedidosActivosAPIView(LoginRequiredMixin, View):
@@ -355,9 +357,6 @@ class PedidosActivosAPIView(LoginRequiredMixin, View):
             'timestamp': timezone.now().isoformat(),
             'total': len(pedidos_json),
         })
-
-
->>>>>>> mejoras-backend
 class CocinaDashboardView(LoginRequiredMixin, ListView):
     """Interfaz de cocina: muestra los pedidos confirmados en tiempo real."""
 
@@ -407,6 +406,16 @@ class PedidoMarcarEntregadaView(LoginRequiredMixin, View):
             )
             Transaccion.objects.get_or_create(pedido=pedido, defaults={'total': total})
         return redirect('cocina_dashboard')
+
+
+class PedidoMarcarPagadoView(LoginRequiredMixin, View):
+    """Marca el pedido como 'pagado' desde la lista de pedidos."""
+    def post(self, request, pk, *args, **kwargs):
+        pedido = get_object_or_404(Pedido, pk=pk)
+        if pedido.estado == 'entregada':
+            pedido.estado = 'pagado'
+            pedido.save()
+        return redirect('pedido_list')
 
 
 class HistorialVentasView(LoginRequiredMixin, ListView):

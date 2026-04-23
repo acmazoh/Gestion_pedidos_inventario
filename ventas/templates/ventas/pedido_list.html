@@ -2,54 +2,389 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Lista de Pedidos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos - Restin POS</title>
+    <style>
+        :root {
+            --white: #FFFFFF;
+            --green: #4CAF50;
+            --blue: #2196F3;
+            --blue-dark: #1565C0;
+            --purple: #9C27B0;
+            --red: #F44336;
+            --black: #000000;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --bg-soft: #f6f9fc;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #eef5fc 0%, #f9fbfd 100%);
+            color: #111827;
+            min-height: 100vh;
+        }
+
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 10px rgba(21, 101, 192, 0.08);
+            padding: 10px 20px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand { font-size: 18px; font-weight: 800; color: var(--black); }
+        .brand span { color: var(--purple); }
+
+        .nav-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .nav-end {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .btn-nav {
+            text-decoration: none;
+            border: 1px solid var(--blue);
+            color: var(--blue);
+            background: var(--white);
+            border-radius: 8px;
+            padding: 5px 11px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: 0.18s ease;
+            cursor: pointer;
+        }
+
+        .btn-nav:hover, .btn-nav.active { background: #eaf3ff; }
+
+        .btn-logout {
+            border: 1px solid var(--purple);
+            background: var(--white);
+            color: var(--purple);
+            border-radius: 8px;
+            padding: 5px 11px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .btn-logout:hover { background: #f5e9f9; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 22px 16px 28px;
+        }
+
+        .page-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            color: var(--blue-dark);
+            font-size: 28px;
+            font-weight: 750;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .stats {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+        }
+
+        .stat-card .label {
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .stat-card .value {
+            color: var(--black);
+            font-size: 24px;
+            font-weight: 700;
+            margin-top: 6px;
+            line-height: 1;
+        }
+
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+        }
+
+        .order-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-top: 4px solid var(--blue);
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(21, 101, 192, 0.12);
+        }
+
+        .order-card.en_preparacion { border-top-color: var(--blue-dark); }
+        .order-card.listo { border-top-color: var(--green); }
+        .order-card.pendiente { border-top-color: var(--purple); }
+        .order-card.cancelado { border-top-color: var(--red); }
+        .order-card.entregada { border-top-color: #FF9800; }
+
+        .order-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .order-id {
+            font-size: 22px;
+            color: var(--black);
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .mesa {
+            color: #1f2937;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .created {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        .estado {
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 5px 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        .estado.en_preparacion {
+            color: var(--blue-dark);
+            background: #e7f0ff;
+            border-color: #cfe2ff;
+        }
+
+        .estado.listo {
+            color: #2e7d32;
+            background: #e9f8eb;
+            border-color: #cdeed2;
+        }
+
+        .estado.pendiente {
+            color: #6a1b9a;
+            background: #f3e8f7;
+            border-color: #e5d0ef;
+        }
+
+        .estado.cancelado {
+            color: #c62828;
+            background: #fdecea;
+            border-color: #f6c7c2;
+        }
+
+        .estado.entregada {
+            color: #e65100;
+            background: #fff3e0;
+            border-color: #ffe0b2;
+        }
+
+        .order-actions {
+            margin-top: 4px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-detail {
+            text-decoration: none;
+            border: none;
+            background: var(--blue);
+            color: var(--white);
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 8px;
+            padding: 8px 12px;
+            transition: filter 0.18s ease;
+            cursor: pointer;
+        }
+
+        .btn-detail:hover {
+            filter: brightness(0.93);
+        }
+
+        .btn-pagado {
+            border: none;
+            background: #4CAF50;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 8px;
+            padding: 8px 14px;
+            cursor: pointer;
+            transition: filter 0.18s ease;
+        }
+
+        .btn-pagado:hover {
+            filter: brightness(0.92);
+        }
+
+        .empty {
+            border: 1px dashed #cfd8e3;
+            border-radius: 12px;
+            padding: 38px 16px;
+            text-align: center;
+            color: #6b7280;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .empty strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 18px;
+            color: #374151;
+        }
+
+        @media (max-width: 700px) {
+            .app-header {
+                padding: 10px 12px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .order-id {
+                font-size: 20px;
+            }
+
+            .container {
+                padding: 16px 12px 22px;
+            }
+        }
+    </style>
 </head>
 <body>
-=======
-    <nav>
-        <a href="/ventas/" style="color:#2196F3; font-weight:bold; text-decoration:none;">Ventas</a> |
-        <a href="/products/" style="color:#2196F3; font-weight:bold; text-decoration:none;">Productos</a> |
-        <a href="{% url 'pedido_create' %}">Nueva Orden</a> |
-        <a href="{% url 'cocina_dashboard' %}">Cocina</a>
-        <form method="post" action="{% url 'logout' %}" style="display:inline;" class="logout-btn">
-            {% csrf_token %}
-            <button type="submit" style="background:none;border:none;color:#9C27B0;cursor:pointer;padding:0;font-weight:bold;">Cerrar Sesión ({{ request.user.username }})</button>
-        </form>
-    </nav>
 
->>>>>>> mejoras-backend
-    <h1>Pedidos</h1>
-    <div>
-        <a href="{% url 'pedido_create' %}">Crear Nuevo Pedido</a> |
-        <a href="{% url 'venta_list' %}">Volver a Productos</a> |
-        <a href="{% url 'cocina_dashboard' %}">Vista de Cocina</a>
-    </div>
+    <header class="app-header">
+        <div class="brand">🍽 Restin <span>Pedidos</span></div>
+        <nav class="nav-center">
+            <a href="{% url 'venta_list' %}" class="btn-nav">Ventas</a>
+            <a href="{% url 'pedido_list' %}" class="btn-nav active">Pedidos</a>
+            <a href="{% url 'pedido_create' %}" class="btn-nav">Nuevo Pedido</a>
+            <a href="{% url 'cocina_dashboard' %}" class="btn-nav">Cocina</a>
+            <a href="{% url 'historial_ventas' %}" class="btn-nav">Historial</a>
+            <a href="/products/" class="btn-nav">Productos</a>
+        </nav>
+        <div class="nav-end">
+            <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-logout">Salir ({{ request.user.username }})</button>
+            </form>
+        </div>
+    </header>
 
-    <table border="1" cellpadding="8" cellspacing="0">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Mesa / Online</th>
-                <th>Estado</th>
-                <th>Creado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for pedido in pedidos %}
-            <tr>
-                <td>{{ pedido.id }}</td>
-                <td>{{ pedido.mesa_o_online }}</td>
-                <td>{{ pedido.get_estado_display }}</td>
-                <td>{{ pedido.fecha_creacion }}</td>
-                <td><a href="{% url 'pedido_detail' pedido.id %}">Ver / Agregar Productos</a></td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="5">No hay pedidos creados aún.</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <main class="container">
+        <section class="page-head">
+            <div>
+                <h1>Gestión de Pedidos</h1>
+                <p class="subtitle">Consulta, edita y agrega productos a cada orden activa.</p>
+            </div>
+        </section>
+
+        <section class="stats" aria-label="Resumen de pedidos">
+            <article class="stat-card">
+                <div class="label">Total pedidos</div>
+                <div class="value">{{ pedidos|length }}</div>
+            </article>
+        </section>
+
+        {% if pedidos %}
+            <section class="orders-grid" aria-label="Listado de pedidos">
+                {% for pedido in pedidos %}
+                    <article class="order-card {{ pedido.estado }}">
+                        <div class="order-top">
+                            <div>
+                                <div class="order-id">#{{ pedido.id }}</div>
+                                <div class="mesa">🪑 {{ pedido.mesa_o_online }}</div>
+                            </div>
+                            <span class="estado {{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
+                        </div>
+                        <p class="created">Creado: {{ pedido.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                        <div class="order-actions">
+                            <a href="{% url 'pedido_detail' pedido.id %}" class="btn-detail">Ver / Agregar productos</a>
+                            {% if pedido.estado == 'entregada' %}
+                            <form method="post" action="{% url 'pedido_pagado' pedido.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-pagado">&#10003; Pagado</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% else %}
+            <section class="empty" aria-live="polite">
+                <strong>No hay pedidos creados aún</strong>
+                Empieza creando una nueva orden para verla aquí.
+            </section>
+        {% endif %}
+    </main>
 </body>
 </html>
