@@ -14,6 +14,18 @@ def get_cache_key(username, ip_address):
 class RateLimitedLoginView(LoginView):
     template_name = 'registration/login.html'
 
+    def get_success_url(self):
+        profile = getattr(self.request.user, 'userprofile', None)
+        role = getattr(profile, 'role', None)
+        role_name = (role.name or '').strip().lower() if role else ''
+        if role_name == 'kitchen' or getattr(profile, 'role_id', None) == 3:
+            return '/cocina/'
+        if role_name == 'waiter':
+            return '/ventas/'
+        if role_name == 'cashier':
+            return '/ventas/'
+        return super().get_success_url()
+
     def get_client_ip(self):
         forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
         if forwarded_for:

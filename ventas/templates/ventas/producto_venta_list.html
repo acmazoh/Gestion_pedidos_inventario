@@ -304,12 +304,22 @@
     <header class="app-header">
         <div class="brand">🧾 Restin <span>Ventas</span></div>
         <nav class="nav-center">
-            <a href="{% url 'venta_list' %}" class="btn-nav active">Ventas</a>
-            <a href="{% url 'pedido_list' %}" class="btn-nav">Pedidos</a>
-            <a href="{% url 'pedido_create' %}" class="btn-nav">Nuevo Pedido</a>
-            <a href="{% url 'cocina_dashboard' %}" class="btn-nav">Cocina</a>
-            <a href="{% url 'historial_ventas' %}" class="btn-nav">Historial</a>
-            <a href="/products/" class="btn-nav">Productos</a>
+            {% with role_name=request.user.userprofile.role.name|default:'' %}
+                {% if role_name|lower == 'cashier' %}
+                    <a href="{% url 'venta_list' %}" class="btn-nav active">Ventas</a>
+                    <a href="{% url 'pedido_list' %}" class="btn-nav">Pedidos</a>
+                    <a href="{% url 'historial_ventas' %}" class="btn-nav">Historial</a>
+                {% else %}
+                    <a href="{% url 'venta_list' %}" class="btn-nav active">Ventas</a>
+                    <a href="{% url 'pedido_list' %}" class="btn-nav">Pedidos</a>
+                    <a href="{% url 'pedido_create' %}" class="btn-nav">Nuevo Pedido</a>
+                {% endif %}
+                {% if role_name|lower != 'waiter' and role_name|lower != 'cashier' %}
+                    <a href="{% url 'cocina_dashboard' %}" class="btn-nav">Cocina</a>
+                    <a href="{% url 'historial_ventas' %}" class="btn-nav">Historial</a>
+                    <a href="/products/" class="btn-nav">Productos</a>
+                {% endif %}
+            {% endwith %}
         </nav>
         <div class="nav-end">
             <form method="post" action="{% url 'logout' %}" style="display:inline;">

@@ -144,6 +144,13 @@ class PedidoListView(LoginRequiredMixin, ListView):
     context_object_name = 'pedidos'
 
     def get_queryset(self):
+        profile = getattr(self.request.user, 'userprofile', None)
+        role = getattr(profile, 'role', None)
+        role_name = (role.name or '').strip().lower() if role else ''
+
+        if role_name == 'waiter':
+            return Pedido.objects.filter(estado__in=['en_preparacion', 'listo']).order_by('-fecha_creacion')
+
         return Pedido.objects.exclude(estado='pagado').order_by('-fecha_creacion')
 
 

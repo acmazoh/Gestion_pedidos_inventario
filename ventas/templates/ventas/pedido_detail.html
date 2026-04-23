@@ -417,12 +417,16 @@
     <header class="app-header">
         <div class="brand">🧾 Restin <span>Pedido</span></div>
         <nav class="nav-center">
-            <a href="{% url 'venta_list' %}" class="btn-nav">Ventas</a>
-            <a href="{% url 'pedido_list' %}" class="btn-nav active">Pedidos</a>
-            <a href="{% url 'pedido_create' %}" class="btn-nav">Nuevo Pedido</a>
-            <a href="{% url 'cocina_dashboard' %}" class="btn-nav">Cocina</a>
-            <a href="{% url 'historial_ventas' %}" class="btn-nav">Historial</a>
-            <a href="/products/" class="btn-nav">Productos</a>
+            {% with role_name=request.user.userprofile.role.name|default:'' %}
+                <a href="{% url 'venta_list' %}" class="btn-nav">Ventas</a>
+                <a href="{% url 'pedido_list' %}" class="btn-nav active">Pedidos</a>
+                <a href="{% url 'pedido_create' %}" class="btn-nav">Nuevo Pedido</a>
+                {% if role_name|lower != 'waiter' %}
+                    <a href="{% url 'cocina_dashboard' %}" class="btn-nav">Cocina</a>
+                    <a href="{% url 'historial_ventas' %}" class="btn-nav">Historial</a>
+                    <a href="/products/" class="btn-nav">Productos</a>
+                {% endif %}
+            {% endwith %}
         </nav>
         <div class="nav-end">
             <form method="post" action="{% url 'logout' %}" style="display:inline;">
