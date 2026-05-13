@@ -10,7 +10,7 @@ class ProductoIngredienteInline(admin.TabularInline):
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
     inlines = [ProductoIngredienteInline]
-    list_display = ('nombre', 'categoria', 'precio')
+    list_display = ('nombre', 'categoria', 'precio', 'disponible')
 
 
 admin.site.register(Categoria)

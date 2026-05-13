@@ -29,6 +29,7 @@ class Producto(models.Model):
     descripcion = models.TextField(blank=True, null=True)
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, related_name="productos")
     precio = models.DecimalField(max_digits=10, decimal_places=2)
+    imagen = models.ImageField(upload_to='productos/', blank=True, null=True)
     ingredientes = models.ManyToManyField(Ingrediente, blank=True, related_name="productos")
     disponible = models.BooleanField(default=True, help_text="¿El producto está activo para ventas?")
 

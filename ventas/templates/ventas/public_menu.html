@@ -1,0 +1,359 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fast Food | Menú Público</title>
+    <style>
+        :root {
+            --bg: #f5f8fc;
+            --panel: #ffffff;
+            --line: #dbe5f2;
+            --text: #0f172a;
+            --muted: #64748b;
+            --blue: #1f78d1;
+            --blue-dark: #155a9f;
+            --purple: #8d2fb6;
+            --success: #2e9a47;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at 15% 0%, rgba(31, 120, 209, 0.16), transparent 35%),
+                radial-gradient(circle at 90% 10%, rgba(141, 47, 182, 0.14), transparent 30%),
+                linear-gradient(180deg, #f7fbff 0%, #eef4fb 48%, #f8fbff 100%);
+            color: var(--text);
+        }
+
+        .wrap {
+            width: min(1180px, 100% - 28px);
+            margin: 0 auto;
+            padding: 16px 0 34px;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(21, 101, 192, 0.08);
+            margin-top: 10px;
+            padding: 10px 14px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 30px;
+        }
+
+        .brand-logo {
+            width: 46px;
+            height: 46px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .brand span {
+            color: var(--purple);
+        }
+
+        .btn-login {
+            border: 1px solid var(--purple);
+            color: var(--purple);
+            background: #fff;
+            border-radius: 10px;
+            padding: 9px 14px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: .18s ease;
+        }
+
+        .btn-login:hover {
+            background: #f7ecfb;
+        }
+
+        .hero {
+            margin-top: 14px;
+            background: var(--panel);
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 22px 24px 20px;
+            box-shadow: 0 6px 16px rgba(2, 19, 45, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 8px;
+            background: linear-gradient(180deg, var(--blue), var(--purple));
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid #d8e6f7;
+            background: #eef5ff;
+            color: var(--blue-dark);
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(1.9rem, 3vw, 2.4rem);
+            color: var(--blue-dark);
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero p {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .chip {
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid #b9d8fa;
+            color: var(--blue-dark);
+            background: #edf5ff;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .chip.active,
+        .chip:hover {
+            background: var(--purple);
+            border-color: var(--purple);
+            color: #fff;
+        }
+
+        .grid {
+            margin-top: 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 12px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-top: 4px solid var(--blue);
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 6px 16px rgba(2, 19, 45, 0.05);
+            display: flex;
+            flex-direction: column;
+            min-height: 260px;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #eff6ff, #f5e9fb);
+        }
+
+        .card-head {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+            align-items: start;
+        }
+
+        .card-title-wrap {
+            min-width: 0;
+        }
+
+        .name {
+            font-size: 1.05rem;
+            font-weight: 800;
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .price {
+            color: var(--success);
+            font-weight: 800;
+            font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+            text-align: right;
+            white-space: nowrap;
+            max-width: 138px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cat {
+            margin-top: 7px;
+            display: inline-block;
+            border: 1px solid #bfdbfe;
+            background: #ebf3ff;
+            color: var(--blue-dark);
+            border-radius: 999px;
+            padding: 4px 9px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .desc {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 14px;
+            min-height: 40px;
+        }
+
+        .ingredients {
+            margin-top: 10px;
+            border-top: 1px dashed #d7e3f1;
+            padding-top: 8px;
+            color: #374151;
+            font-size: 13px;
+            line-height: 1.45;
+            margin-top: auto;
+        }
+
+        .ingredients strong {
+            color: var(--purple);
+        }
+
+        .empty {
+            margin-top: 16px;
+            background: #fff;
+            border: 1px dashed var(--line);
+            border-radius: 14px;
+            padding: 26px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        @media (max-width: 760px) {
+            .topbar {
+                grid-template-columns: 1fr;
+            }
+
+            .brand {
+                font-size: 24px;
+            }
+
+            .btn-login {
+                justify-self: start;
+            }
+
+            .name {
+                font-size: 1rem;
+            }
+
+            .price {
+                font-size: 1.2rem;
+                max-width: 110px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header class="topbar">
+            <div class="brand">
+                <img class="brand-logo" src="{% static 'ventas/restin2.jpeg' %}?v=20260513" alt="Restin logo">
+                Restin <span>Fast Food</span>
+            </div>
+            <a class="btn-login" href="/login/">Iniciar Sesion</a>
+        </header>
+
+        <section class="hero" id="menu">
+            <div class="hero-badge">Este es nuestro menu</div>
+            <h1>Menu Publico</h1>
+            <p>Conoce nuestros productos disponibles, categorias, precios e ingredientes.</p>
+            <div class="chips">
+                <a href="/" class="chip {% if not categoria_seleccionada %}active{% endif %}">Todas</a>
+                {% for categoria in categorias %}
+                    <a href="/?categoria={{ categoria.id }}" class="chip {% if categoria_seleccionada and categoria_seleccionada.id == categoria.id %}active{% endif %}">{{ categoria.nombre }}</a>
+                {% endfor %}
+            </div>
+        </section>
+
+        {% if productos %}
+            <section class="grid" aria-label="Menu visual de productos">
+                {% for producto in productos %}
+                    <article class="card">
+                        {% if producto.imagen %}
+                            <img class="card-image" src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+                        {% endif %}
+                        <div class="card-head">
+                            <div class="card-title-wrap">
+                                <div class="name">{{ producto.nombre }}</div>
+                                <span class="cat">{{ producto.categoria.nombre }}</span>
+                            </div>
+                            <div class="price">${{ producto.precio }}</div>
+                        </div>
+
+                        <p class="desc">{% if producto.descripcion %}{{ producto.descripcion }}{% else %}Sin descripcion{% endif %}</p>
+
+                        <div class="ingredients">
+                            <strong>Ingredientes:</strong>
+                            {% if producto.productoingrediente_set.all %}
+                                {% for pi in producto.productoingrediente_set.all %}
+                                    {{ pi.ingrediente.nombre }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            {% elif producto.ingredientes.all %}
+                                {% for ingrediente in producto.ingredientes.all %}
+                                    {{ ingrediente.nombre }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                Sin ingredientes registrados
+                            {% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% else %}
+            <section class="empty">
+                No hay productos disponibles para mostrar en este momento.
+            </section>
+        {% endif %}
+    </div>
+</body>
+</html>

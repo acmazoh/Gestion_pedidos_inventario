@@ -5,17 +5,21 @@
     <meta charset="UTF-8">
     <title>{% if form.instance.pk %}Editar{% else %}Nuevo{% endif %} producto</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'ventas/restin-theme.css' %}">
+    <link rel="stylesheet" href="{% static 'ventas/restin-theme.css' %}?v=20260513">
 </head>
 <body>
 <div class="page-shell">
   <div class="page-container">
 
     <nav class="top-nav">
+      <div class="brand"><img class="brand-logo" src="{% static 'ventas/restin2.jpeg' %}?v=20260513" alt="Logo"> Restin <span>Productos</span></div>
       <div class="nav-links">
         <a class="nav-link" href="{% url 'ingrediente_list' %}">Ingredientes</a>
         <a class="nav-link" href="{% url 'movimiento_list' %}">Movimientos</a>
         <a class="nav-link is-active" href="{% url 'producto_list' %}">Productos</a>
+      </div>
+      <div class="nav-end">
+        <a href="{% url 'pedido_create' %}" class="btn btn-ghost">&larr; Nuevo Pedido</a>
       </div>
     </nav>
 
@@ -25,7 +29,7 @@
     </header>
 
     <section class="page-card">
-      <form method="post" class="stack">
+      <form method="post" enctype="multipart/form-data" class="stack">
         {% csrf_token %}
         {% for field in form %}
           <div class="stack" style="gap:.3rem">

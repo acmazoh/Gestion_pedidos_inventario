@@ -1,9 +1,10 @@
 from .api_views import PedidoCreateAPIView
 from django.urls import path, include
+from django.views.generic import RedirectView
 from . import views
 
 urlpatterns = [
-    path('', views.ProductoVentaListView.as_view(), name='venta_list'),
+    path('', RedirectView.as_view(url='/', permanent=False), name='venta_list'),
     path('pedidos/', views.PedidoListView.as_view(), name='pedido_list'),
     path('pedidos/nuevo/', views.PedidoCreateView.as_view(), name='pedido_create'),
     path('pedidos/<int:pk>/', views.PedidoDetailView.as_view(), name='pedido_detail'),

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ventas - Productos Disponibles</title>
@@ -45,7 +46,8 @@
             gap: 10px;
         }
 
-        .brand { font-size: 18px; font-weight: 800; color: var(--black); }
+        .brand { display: inline-flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 800; color: var(--black); }
+        .brand-logo { width: 24px; height: 24px; object-fit: cover; border-radius: 5px; }
         .brand span { color: var(--purple); }
 
         .nav-center {
@@ -302,15 +304,13 @@
 </head>
 <body>
     <header class="app-header">
-        <div class="brand">🧾 Restin <span>Ventas</span></div>
+        {% with role_name=request.user.userprofile.role.name|default:'' %}
+        <div class="brand"><img class="brand-logo" src="{% static 'ventas/restin2.jpeg' %}" alt="Logo"> Restin <span>Fast Food</span></div>
         <nav class="nav-center">
-            {% with role_name=request.user.userprofile.role.name|default:'' %}
                 {% if role_name|lower == 'cashier' %}
-                    <a href="{% url 'venta_list' %}" class="btn-nav active">Ventas</a>
                     <a href="{% url 'pedido_list' %}" class="btn-nav">Pedidos</a>
                     <a href="{% url 'historial_ventas' %}" class="btn-nav">Historial</a>
                 {% else %}
-                    <a href="{% url 'venta_list' %}" class="btn-nav active">Ventas</a>
                     <a href="{% url 'pedido_list' %}" class="btn-nav">Pedidos</a>
                     <a href="{% url 'pedido_create' %}" class="btn-nav">Nuevo Pedido</a>
                 {% endif %}
@@ -319,8 +319,8 @@
                     <a href="{% url 'historial_ventas' %}" class="btn-nav">Historial</a>
                     <a href="/products/" class="btn-nav">Productos</a>
                 {% endif %}
-            {% endwith %}
         </nav>
+        {% endwith %}
         <div class="nav-end">
             <form method="post" action="{% url 'logout' %}" style="display:inline;">
                 {% csrf_token %}
@@ -331,8 +331,7 @@
 
     <main class="container">
         <section class="page-title">
-            <h1>Productos Disponibles</h1>
-            <p>Selecciona una categoria y agrega productos a tus pedidos activos.</p>
+            <h1>Nuestro Menú</h1>
         </section>
 
         <section class="kpis" aria-label="Resumen ventas">

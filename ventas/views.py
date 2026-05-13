@@ -88,7 +88,9 @@ class MarcarEntregadoView(LoginRequiredMixin, View):
         return redirect('cocina_dashboard')
 
 
-class ProductoVentaListView(ListView):
+class ProductoVentaListView(LoginRequiredMixin, ListView):
+    """Vista interna para personal autenticado (ventas/POS)."""
+
     model = Producto
     template_name = 'ventas/producto_venta_list.html'
     context_object_name = 'productos'
@@ -116,6 +118,36 @@ class ProductoVentaListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['categorias'] = Categoria.objects.all()
+        categoria_id = self.request.GET.get('categoria')
+        if categoria_id:
+            try:
+                context['categoria_seleccionada'] = Categoria.objects.get(id=categoria_id)
+            except Categoria.DoesNotExist:
+                pass
+        return context
+
+
+class PublicMenuView(ListView):
+    """Landing pública del restaurante, accesible sin autenticación."""
+
+    model = Producto
+    template_name = 'ventas/public_menu.html'
+    context_object_name = 'productos'
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(disponible=True).select_related('categoria').prefetch_related(
+            'productoingrediente_set__ingrediente',
+            'ingredientes',
+        )
+        categoria_id = self.request.GET.get('categoria')
+        if categoria_id:
+            queryset = queryset.filter(categoria_id=categoria_id)
+        return queryset.order_by('categoria__nombre', 'nombre')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categorias'] = Categoria.objects.filter(productos__disponible=True).distinct().order_by('nombre')
+        context['productos_total'] = context['productos'].count()
         categoria_id = self.request.GET.get('categoria')
         if categoria_id:
             try:
@@ -456,7 +488,7 @@ class HistorialVentasView(LoginRequiredMixin, ListView):
 class ExportarHistorialCSVView(LoginRequiredMixin, View):
     """Exporta el historial de ventas filtrado por fecha en formato CSV (RF-11).
     Acepta los mismos parámetros ?desde= y ?hasta= que HistorialVentasView.
-    Genera un archivo descargable con una fila por producto vendido.
+    Genera un archivo descargable con una fila por pedido y un detalle resumido de productos.
     """
     def get(self, request, *args, **kwargs):
         qs = Transaccion.objects.select_related('pedido').order_by('-fecha')
@@ -473,18 +505,25 @@ class ExportarHistorialCSVView(LoginRequiredMixin, View):
         response.write('\ufeff')
 
         writer = csv.writer(response)
-        writer.writerow(['Fecha', 'Pedido', 'Mesa/Cliente', 'Producto', 'Cantidad', 'Total pedido'])
+        writer.writerow(['REPORTE HISTORIAL DE VENTAS'])
+        writer.writerow(['Generado el', timezone.now().strftime('%d/%m/%Y %H:%M')])
+        writer.writerow(['Desde', fecha_desde or 'Todos'])
+        writer.writerow(['Hasta', fecha_hasta or 'Todos'])
+        writer.writerow([])
+        writer.writerow(['Fecha', 'Pedido', 'Mesa / Cliente', 'Estado', 'Productos', 'Cantidad total', 'Total'])
 
         for t in qs:
             items = t.pedido.items.select_related('producto').all()
-            for item in items:
-                writer.writerow([
-                    t.fecha.strftime('%d/%m/%Y %H:%M'),
-                    f'#{t.pedido.id}',
-                    t.pedido.mesa_o_online,
-                    item.producto.nombre,
-                    item.cantidad,
-                    t.total,
-                ])
+            productos = [f'{item.producto.nombre} x{item.cantidad}' for item in items]
+            cantidad_total = sum(item.cantidad for item in items)
+            writer.writerow([
+                t.fecha.strftime('%d/%m/%Y %H:%M'),
+                f'#{t.pedido.id}',
+                t.pedido.mesa_o_online,
+                t.pedido.get_estado_display(),
+                '\n'.join(productos),
+                cantidad_total,
+                f'${t.total:,.2f}',
+            ])
 
         return response

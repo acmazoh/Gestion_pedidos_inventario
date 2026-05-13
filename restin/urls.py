@@ -15,6 +15,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
@@ -24,8 +26,11 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from django.views.generic import RedirectView
+from ventas.views import PublicMenuView
 
 urlpatterns = [
+    path('', PublicMenuView.as_view(), name='public_menu'),
+    path('menu/', PublicMenuView.as_view(), name='public_menu_alt'),
     path("admin/", admin.site.urls),
     # Template-based views (mantener compatibilidad)
     path('products/', include('products.urls')),
@@ -36,7 +41,7 @@ urlpatterns = [
     path('users/', include('users.urls')),
     path('accounts/login/', RateLimitedLoginView.as_view(), name='login'),
     path('accounts/logout/', auth_views.LogoutView.as_view(next_page='/accounts/login/'), name='logout'),
-    path('login/', RedirectView.as_view(pattern_name='login', permanent=False)),
+    path('login/', RateLimitedLoginView.as_view(), name='login_short'),
     # JWT Auth endpoints
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
@@ -44,3 +49,6 @@ urlpatterns = [
     # Endpoints de autenticación amigables
     path('api/auth/', include('users.api_urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

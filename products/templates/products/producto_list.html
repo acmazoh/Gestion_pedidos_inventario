@@ -5,12 +5,68 @@
     <meta charset="UTF-8">
     <title>Gestión de Productos</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'ventas/restin-theme.css' %}">
+    <link rel="stylesheet" href="{% static 'ventas/restin-theme.css' %}?v=20260513">
     <style>
+        .top-nav {
+          background: var(--color-white);
+          border: 1px solid var(--color-border);
+          box-shadow: 0 2px 10px rgba(21, 101, 192, 0.08);
+        }
+        .nav-link {
+          background: var(--color-white);
+          color: var(--color-blue);
+          border: 1px solid var(--color-blue);
+        }
+        .nav-link.is-active,
+        .nav-link:hover {
+          background: #eaf3ff;
+          color: var(--color-dark-blue);
+        }
+        .nav-end .btn-ghost {
+          background: var(--color-white);
+          color: var(--color-dark-blue);
+        }
+        .nav-end .btn-primary {
+          box-shadow: none;
+        }
+        .page-header {
+          background: var(--color-white);
+        }
+        .page-header::after {
+          background: linear-gradient(180deg, var(--color-blue), var(--color-purple));
+        }
+        .page-title {
+          color: var(--color-dark-blue);
+        }
+        .page-subtitle {
+          color: var(--color-text-soft);
+        }
+        .kpi-bar {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 12px;
+        }
+        .kpi-chip {
+          background: var(--color-white);
+          border: 1px solid var(--color-border);
+          border-radius: 14px;
+          padding: 14px 16px;
+          font-size: .9rem;
+          color: var(--color-text-soft);
+          box-shadow: 0 10px 24px rgba(21, 101, 192, 0.06);
+        }
+        .kpi-chip strong {
+          display: block;
+          font-size: 1.9rem;
+          font-weight: 800;
+          color: var(--color-black);
+          line-height: 1;
+          margin-bottom: 4px;
+        }
         .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1rem;
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 1rem;
         }
         .product-card {
             background: #fff;
@@ -24,6 +80,14 @@
             transition: box-shadow .2s;
         }
         .product-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.1); }
+        .product-card-image {
+          width: 100%;
+          height: 160px;
+          object-fit: cover;
+          border-radius: 10px;
+          margin-bottom: .8rem;
+          background: linear-gradient(135deg, #eff6ff, #f5e9fb);
+        }
         .product-card-name { font-size: 1.05rem; font-weight: 700; color: #111; }
         .product-card-cat { font-size: .8rem; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; }
         .product-card-price { font-size: 1.3rem; font-weight: 800; color: #1565C0; }
@@ -31,9 +95,7 @@
         .product-card-footer { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding-top: .5rem; border-top: 1px solid #f3f4f6; }
         .badge-disponible { background: #e8f5e9; color: #2e7d32; font-size: .75rem; font-weight: 600; border-radius: 999px; padding: 2px 10px; }
         .badge-nodisponible { background: #fce4ec; color: #c62828; font-size: .75rem; font-weight: 600; border-radius: 999px; padding: 2px 10px; }
-        .kpi-bar { display: flex; gap: 1rem; flex-wrap: wrap; }
-        .kpi-chip { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: .6rem 1.2rem; font-size: .85rem; color: #374151; }
-        .kpi-chip strong { display: block; font-size: 1.4rem; font-weight: 800; color: #111; }
+        .kpi-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
     </style>
 </head>
 <body>
@@ -41,14 +103,14 @@
   <div class="page-container stack">
 
     <nav class="top-nav">
-      <div class="nav-spacer"></div>
+      <div class="brand"><img class="brand-logo" src="{% static 'ventas/restin2.jpeg' %}?v=20260513" alt="Logo"> Restin <span>Productos</span></div>
       <div class="nav-links">
         <a class="nav-link" href="{% url 'ingrediente_list' %}">Ingredientes</a>
         <a class="nav-link" href="{% url 'movimiento_list' %}">Movimientos</a>
         <a class="nav-link is-active" href="{% url 'producto_list' %}">Productos</a>
       </div>
       <div class="nav-end">
-        <a href="{% url 'venta_list' %}" class="btn btn-ghost">&larr; Volver a ventas</a>
+        <a href="{% url 'pedido_create' %}" class="btn btn-ghost">&larr; Nuevo Pedido</a>
         <a href="{% url 'producto_create' %}" class="btn btn-primary">+ Nuevo producto</a>
       </div>
     </nav>
@@ -77,6 +139,9 @@
     <div class="product-grid">
       {% for producto in productos %}
       <div class="product-card">
+        {% if producto.imagen %}
+          <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="product-card-image">
+        {% endif %}
         <div>
           <div class="product-card-cat">{{ producto.categoria }}</div>
           <div class="product-card-name">{{ producto.nombre }}</div>

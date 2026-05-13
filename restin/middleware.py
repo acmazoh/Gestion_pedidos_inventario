@@ -60,6 +60,12 @@ class KitchenOnlyMiddleware:
         "/static/",
     )
 
+    PUBLIC_ALLOWED_PATHS = {
+        "/",
+        "/menu",
+        "/menu/",
+    }
+
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -72,6 +78,9 @@ class KitchenOnlyMiddleware:
             role_name = (role.name or "").strip().lower() if role else ""
             role_id = getattr(profile, "role_id", None)
             path = request.path
+
+            if path in self.PUBLIC_ALLOWED_PATHS:
+                return self.get_response(request)
 
             if role_name == "kitchen" or role_id == self.KITCHEN_ROLE_ID:
                 is_allowed = path.startswith(self.ALLOWED_PREFIXES) or any(
@@ -88,7 +97,7 @@ class KitchenOnlyMiddleware:
                     or any(pattern.match(path) for pattern in self.WAITER_ALLOWED_PATTERNS)
                 )
                 if not is_allowed:
-                    return redirect("/ventas/")
+                    return redirect("/ventas/pedidos/")
 
             if role_name == "cashier":
                 is_allowed = (
@@ -97,6 +106,6 @@ class KitchenOnlyMiddleware:
                     or any(pattern.match(path) for pattern in self.CASHIER_ALLOWED_PATTERNS)
                 )
                 if not is_allowed:
-                    return redirect("/ventas/")
+                    return redirect("/ventas/pedidos/")
 
         return self.get_response(request)

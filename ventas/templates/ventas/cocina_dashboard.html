@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Cocina — Restin POS</title>
@@ -36,7 +37,18 @@
             color: #111;
             letter-spacing: -.3px;
         }
-        .header-brand span { color: #9C27B0; }
+        .brand-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .brand-logo {
+            width: 24px;
+            height: 24px;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+        .brand-title span { color: #9C27B0; }
 
         .status-line {
             font-size: 11px;
@@ -290,7 +302,7 @@
 <!-- HEADER -->
 <header class="app-header">
     <div class="header-brand">
-        🍽️ Restin <span>Cocina</span>
+        <div class="brand-title"><img class="brand-logo" src="{% static 'ventas/restin2.jpeg' %}" alt="Logo"> Restin <span>Cocina</span></div>
         <div class="status-line">
             <span class="online-dot"></span>
             <span id="status-text">En línea</span>
@@ -304,7 +316,6 @@
             {% if role_name|lower == 'kitchen' %}
                 <a href="{% url 'cocina_dashboard' %}" class="btn-nav active">Cocina</a>
             {% else %}
-                <a href="{% url 'venta_list' %}" class="btn-nav">Ventas</a>
                 <a href="{% url 'pedido_list' %}" class="btn-nav">Pedidos</a>
                 <a href="{% url 'pedido_create' %}" class="btn-nav">Nuevo Pedido</a>
                 <a href="{% url 'cocina_dashboard' %}" class="btn-nav active">Cocina</a>

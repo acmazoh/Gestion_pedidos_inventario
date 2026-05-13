@@ -21,9 +21,9 @@ class RateLimitedLoginView(LoginView):
         if role_name == 'kitchen' or getattr(profile, 'role_id', None) == 3:
             return '/cocina/'
         if role_name == 'waiter':
-            return '/ventas/'
+            return '/ventas/pedidos/'
         if role_name == 'cashier':
-            return '/ventas/'
+            return '/ventas/pedidos/'
         return super().get_success_url()
 
     def get_client_ip(self):
