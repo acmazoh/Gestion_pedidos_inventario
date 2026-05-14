@@ -202,6 +202,14 @@ input[type="submit"]:hover {
     box-shadow: var(--shadow-sm);
 }
 
+.btn.no-hover:hover,
+.btn.no-hover:focus {
+    transform: none;
+    box-shadow: none;
+    background: var(--color-blue);
+    color: var(--color-white);
+}
+
 .btn-primary,
 button,
 input[type="submit"] {
