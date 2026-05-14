@@ -135,6 +135,9 @@ class PublicMenuView(ListView):
     context_object_name = 'productos'
 
     def get_queryset(self):
+        from django.db.models import F, OuterRef, Exists
+        from products.models import ProductoIngrediente
+
         queryset = super().get_queryset().filter(disponible=True).select_related('categoria').prefetch_related(
             'productoingrediente_set__ingrediente',
             'ingredientes',
@@ -142,11 +145,21 @@ class PublicMenuView(ListView):
         categoria_id = self.request.GET.get('categoria')
         if categoria_id:
             queryset = queryset.filter(categoria_id=categoria_id)
+
+        queryset = queryset.filter(productoingrediente__isnull=False).distinct()
+        pi_sub = ProductoIngrediente.objects.filter(
+            producto=OuterRef('pk'),
+            ingrediente__stock__lt=F('cantidad')
+        )
+        queryset = queryset.annotate(
+            tiene_faltante=Exists(pi_sub)
+        ).filter(tiene_faltante=False)
+
         return queryset.order_by('categoria__nombre', 'nombre')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['categorias'] = Categoria.objects.filter(productos__disponible=True).distinct().order_by('nombre')
+        context['categorias'] = Categoria.objects.filter(productos__in=context['productos']).distinct().order_by('nombre')
         context['productos_total'] = context['productos'].count()
         categoria_id = self.request.GET.get('categoria')
         if categoria_id:
