@@ -105,4 +105,10 @@ class IngredienteViewSet(mixins.CreateModelMixin,
         profile = getattr(request.user, 'userprofile', None)
         if not profile or not profile.is_active or not profile.role or profile.role.name != 'admin':
             return Response({'error': 'Solo el administrador puede eliminar ingredientes.'}, status=403)
+        ingrediente = self.get_object()
+        if ingrediente.esta_ligado_a_productos():
+            return Response(
+                {'error': 'No es posible eliminarlo.'},
+                status=409,
+            )
         return super().destroy(request, *args, **kwargs)

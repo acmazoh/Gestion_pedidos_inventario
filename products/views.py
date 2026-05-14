@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
@@ -106,6 +107,16 @@ class IngredienteDeleteView(DeleteView):
     model = Ingrediente
     template_name = 'products/ingrediente_confirm_delete.html'
     success_url = reverse_lazy('ingrediente_list')
+
+    def post(self, request, *args, **kwargs):
+        ingrediente = get_object_or_404(Ingrediente, pk=kwargs.get('pk'))
+        if ingrediente.esta_ligado_a_productos():
+            messages.error(
+                request,
+                'No es posible eliminarlo.',
+            )
+            return redirect('ingrediente_list')
+        return super().post(request, *args, **kwargs)
 
 
 # ── Movimientos ───────────────────────────────────────────────────────────────

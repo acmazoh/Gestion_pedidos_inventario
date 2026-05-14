@@ -120,6 +120,18 @@
       <p class="page-subtitle">Administra los productos disponibles para ventas: precio, categoría y disponibilidad.</p>
     </header>
 
+    {% if messages %}
+    <section class="stack" aria-live="polite">
+      {% for message in messages %}
+      {% if forloop.last %}
+      <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+        {{ message }}
+      </div>
+      {% endif %}
+      {% endfor %}
+    </section>
+    {% endif %}
+
     <div class="kpi-bar">
       <div class="kpi-chip">
         <strong>{{ productos|length }}</strong>

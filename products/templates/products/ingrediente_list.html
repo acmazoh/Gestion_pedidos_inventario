@@ -27,6 +27,18 @@
                 <p class="page-subtitle">Monitorea unidades disponibles, detecta stock bajo y edita ingredientes del sistema.</p>
             </header>
 
+            {% if messages %}
+            <section class="stack" aria-live="polite">
+                {% for message in messages %}
+                {% if forloop.last %}
+                <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+                    {{ message }}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </section>
+            {% endif %}
+
             <section class="page-card">
                 {% if ingredientes %}
                 <div class="table-wrap">
