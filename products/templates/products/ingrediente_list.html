@@ -33,9 +33,30 @@
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Nombre</th>
-                                <th>Unidad</th>
-                                <th>Stock actual</th>
+                                <th>
+                                    <a class="sort-link{% if current_sort == 'nombre' %} active{% endif %}" href="?sort=nombre&direction={% if current_sort == 'nombre' and current_direction == 'desc' %}asc{% else %}desc{% endif %}">
+                                        Nombre
+                                        {% if current_sort == 'nombre' %}
+                                            <span class="sort-arrow">{% if current_direction == 'desc' %}▼{% else %}▲{% endif %}</span>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a class="sort-link{% if current_sort == 'unidad' %} active{% endif %}" href="?sort=unidad&direction={% if current_sort == 'unidad' and current_direction == 'desc' %}asc{% else %}desc{% endif %}">
+                                        Unidad
+                                        {% if current_sort == 'unidad' %}
+                                            <span class="sort-arrow">{% if current_direction == 'desc' %}▼{% else %}▲{% endif %}</span>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a class="sort-link{% if current_sort == 'stock' %} active{% endif %}" href="?sort=stock&direction={% if current_sort == 'stock' and current_direction == 'desc' %}asc{% else %}desc{% endif %}">
+                                        Stock actual
+                                        {% if current_sort == 'stock' %}
+                                            <span class="sort-arrow">{% if current_direction == 'desc' %}▼{% else %}▲{% endif %}</span>
+                                        {% endif %}
+                                    </a>
+                                </th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>

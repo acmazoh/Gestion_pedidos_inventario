@@ -55,9 +55,30 @@ class IngredienteListView(ListView):
     template_name = 'products/ingrediente_list.html'
     context_object_name = 'ingredientes'
 
+    SORT_FIELDS = {
+        'stock': 'stock',
+        'nombre': 'nombre',
+        'unidad': 'unidad_medida',
+    }
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        sort = self.request.GET.get('sort', 'stock')
+        direction = self.request.GET.get('direction', 'desc')
+        order_field = self.SORT_FIELDS.get(sort, 'stock')
+
+        if direction == 'asc':
+            queryset = queryset.order_by(order_field)
+        else:
+            queryset = queryset.order_by(f'-{order_field}')
+
+        return queryset
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['stock_minimo'] = 5
+        ctx['current_sort'] = self.request.GET.get('sort', 'stock')
+        ctx['current_direction'] = self.request.GET.get('direction', 'desc')
         return ctx
 
 

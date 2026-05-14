@@ -360,6 +360,51 @@ input[type="submit"]:hover {
     letter-spacing: 0.03em;
 }
 
+.sort-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--color-white);
+    text-decoration: none;
+    font-weight: 700;
+    transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.table th a {
+    color: var(--color-white);
+}
+
+.sort-link:hover {
+    color: var(--color-white);
+    transform: translateY(-1px);
+}
+
+.table th a,
+.table th a:link,
+.table th a:visited,
+.table th a:hover,
+.table th a:active,
+.table th a:focus {
+    color: var(--color-white) !important;
+    text-decoration: none;
+}
+
+.sort-link.active {
+    text-decoration: underline;
+}
+
+.sort-link .sort-arrow {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--color-white);
+    font-size: 0.8rem;
+}
+
 .table tbody tr:hover {
     background: rgba(33, 150, 243, 0.04);
 }
