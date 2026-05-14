@@ -419,3 +419,13 @@ class ConfirmarOrdenTest(TestCase):
         self.client.post(reverse('pedido_confirm', args=[self.pedido.pk]))
         self.pedido.refresh_from_db()
         self.assertEqual(self.pedido.estado, 'pendiente')
+
+    def test_producto_sin_stock_no_aparece_en_formulario_del_pedido(self):
+        """Un producto con ingredientes sin stock no debe ofrecerse para agregar al pedido."""
+        self.ingrediente.stock = 0
+        self.ingrediente.save()
+
+        resp = self.client.get(reverse('pedido_detail', args=[self.pedido.pk]))
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, 'Torta')
