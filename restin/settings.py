@@ -147,4 +147,4 @@ SIMPLE_JWT = {
 
 CSRF_FAILURE_VIEW = "restin.csrf_views.csrf_failure"
 
-ALLOWED_HOSTS = ['98.91.129.235']
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "98.91.129.235"]
