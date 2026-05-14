@@ -1,203 +1,163 @@
-## RF-10: Descuento Automático de Inventario al Confirmar Orden
+# Gestión de Pedidos e Inventario
 
-Cuando una orden es confirmada (desde el POS), el sistema descuenta automáticamente del inventario las cantidades de ingredientes usados en los productos de la orden, según las recetas definidas.
+Proyecto web para restaurantes que centraliza la gestión de pedidos, inventario y roles de usuario.
 
-### ¿Cómo funciona?
-- Al confirmar una orden, el backend recorre todos los productos y sus cantidades.
-- Para cada producto, consulta su receta (`ProductoIngrediente`) y descuenta el stock de cada ingrediente involucrado.
-- Si falta stock de algún ingrediente, la orden NO se confirma y se muestra un mensaje claro (ver RF-07).
-- Cada descuento queda registrado en el historial de movimientos de inventario (`MovimientoInventario`), con fecha, cantidad, stock resultante y pedido asociado.
+## Descripción del proyecto
 
-### ¿Cómo lo veo en el sistema?
-- Ve a **Productos → Ingredientes** (`/products/ingredientes/`) para ver el stock actualizado tras confirmar una orden.
-- Ingredientes con stock bajo (≤ 5) aparecen resaltados y con etiqueta "Stock bajo".
-- Haz clic en **Movimientos** para ver el historial detallado de entradas y salidas de inventario.
+Este sistema permite a un restaurante gestionar:
 
-### Pruebas recomendadas
-1. Confirma una orden y verifica que el stock de ingredientes se descuenta correctamente.
-2. Si el stock de algún ingrediente queda bajo, la alerta visual aparece en la tabla.
-3. Consulta el historial de movimientos para ver el registro del descuento.
+- Productos del menú y sus ingredientes.
+- Pedidos por mesa u órdenes en línea.
+- Control de inventario automático al confirmar pedidos.
+- Historias de movimientos de stock e ingredientes.
+- Estados de pedidos para cocina y entrega.
+- Roles de usuario con permisos diferenciados.
 
-### Comentarios técnicos
-- El flujo está cubierto por pruebas automáticas en `ventas/tests.py`.
-- El frontend de inventario y movimientos es solo visual y no afecta otros módulos.
+La aplicación está construida con Django y ofrece una interfaz administrativa para gestionar productos, órdenes e inventario.
 
----
-## RF-09: Actualizar Estado de Orden (Cocina) — Control de Permisos y Feedback Visual
+## Requisitos previos
 
-En la vista de cocina (`/ventas/cocina/`), solo los usuarios con rol **cocina** o **admin** pueden ver y utilizar los botones para cambiar el estado de los pedidos ("Listo" y "Entregada").
+- Python 3.14
+- pip
+- Git (opcional)
+- Windows (el proyecto está probado en este sistema)
 
-### ¿Cómo funciona?
-- El backend expone el rol del usuario autenticado al template.
-- El frontend (JS en `cocina_dashboard.html`) solo muestra los botones de cambio de estado si el usuario tiene rol `kitchen` o `admin`.
-- Si un usuario sin permisos intenta manipular el DOM o forzar el envío del formulario, el JS bloquea la acción y muestra una notificación: "No tienes permiso para cambiar el estado de la orden.".
-- El backend también valida los permisos antes de procesar el cambio de estado (seguridad total).
+## Instalación
 
-### Pruebas recomendadas
-1. Iniciar sesión como usuario con rol **cocina** o **admin**: los botones aparecen y funcionan.
-2. Iniciar sesión como otro rol (mesero, cajero): los botones NO aparecen.
-3. Intentar manipular el DOM para enviar el formulario: aparece notificación de error y no se envía.
-4. Revisar que el backend rechaza cambios de estado si el usuario no tiene permisos (ver logs o respuesta HTTP).
+1. Abre PowerShell y navega al directorio del proyecto:
 
-### Comentarios técnicos
-- El control de visibilidad y feedback visual está implementado en el JS del template `cocina_dashboard.html`.
-- El backend valida el rol antes de procesar cambios de estado para máxima seguridad.
-
----
-## RF-08: Vista de Cocina en Tiempo Real
-
-Permite al personal de cocina visualizar en tiempo real todas las órdenes confirmadas y pendientes de preparación, con una interfaz optimizada para tablets y dispositivos de cocina.
-
-### ¿Cómo funciona?
-- Cuando una orden es confirmada en el POS, aparece automáticamente en la vista de cocina en menos de 2 segundos.
-- La vista de cocina se actualiza en tiempo real mediante AJAX polling (cada 3 segundos) y puede soportar WebSocket si está habilitado.
-- Cada orden se muestra como una tarjeta con:
-  - Número de orden
-  - Mesa o cliente
-  - Hora de creación
-  - Lista de productos y cantidades
-  - Estado visual (en preparación, listo, entregada)
-  - Botones para marcar como "Listo" o "Entregada"
-- Las órdenes nuevas se resaltan con color y animación.
-- El diseño es responsivo, con texto grande y alto contraste, ideal para tablets.
-
-### Endpoints y lógica
-- `GET /api/orders/kitchen/` — Devuelve todas las órdenes en estado "en_preparacion" o "listo".
-- El frontend consulta este endpoint periódicamente y actualiza la vista automáticamente.
-- El backend soporta tanto polling como WebSocket para notificaciones en tiempo real.
-
-### Ejemplo de uso
-1. Confirma una orden desde el POS.
-2. En la vista de cocina (`/ventas/cocina/`), la nueva orden aparece automáticamente.
-3. El cocinero puede marcar la orden como "Listo" o "Entregada" desde la misma interfaz.
-
-### Diseño y usabilidad
-- Interfaz clara, sin necesidad de capacitación.
-- Tarjetas grandes, colores diferenciados por estado.
-- Indicador visual de órdenes nuevas.
-- Adaptable a pantallas de tablet y escritorio.
-
-### Pruebas recomendadas
-1. Confirmar una orden y verificar que aparece en cocina en <2 segundos.
-2. Confirmar varias órdenes seguidas y verificar que todas aparecen.
-3. Probar la vista en un dispositivo tablet o simulador de pantalla pequeña.
-
-### Comentarios técnicos
-- El código de actualización automática está comentado en la plantilla `cocina_dashboard.html`.
-- El endpoint de backend está documentado en `ventas/api_views.py` y `ventas/consumers.py`.
-
----
-## RF-03: Crear Nueva Orden en POS
-
-Permite crear una nueva orden desde el POS, asociada a una mesa o identificador online, registrando el timestamp automáticamente.
-
-#### Cómo crear una orden (paso a paso)
-1. Ingresa a la vista POS y haz clic en "Nueva Orden".
-2. Selecciona la mesa o ingresa el identificador online.
-3. Agrega productos y cantidades.
-4. Haz clic en "Crear Orden".
-5. El sistema crea la orden y la muestra en la lista de pedidos y en cocina.
-
-#### Ejemplo de petición al endpoint (Thunder Client/Postman)
-
-POST http://localhost:8000/ventas/api/orders/create/
-
-Headers:
-- Authorization: Bearer TU_TOKEN
-- Content-Type: application/json
-
-Body:
-```json
-{
-  "mesa_o_online": "Mesa 5",
-  "productos": [
-    {"producto": 1, "cantidad": 2},
-    {"producto": 5, "cantidad": 1}
-  ]
-}
+```powershell
+cd C:\Users\15-cw1010la\Desktop\proyecto\Gestion_pedidos_inventario
 ```
 
-#### Ejemplo de respuesta
-```json
-{
-  "id": 18,
-  "mesa_o_online": "Mesa 5",
-  "fecha_creacion": "2026-04-21T22:47:53.564517Z",
-  "productos": [
-    {"producto": "Hamburguesa Sencilla", "cantidad": 2},
-    {"producto": "Coca Cola 400ml", "cantidad": 1}
-  ]
-}
+2. Crea un entorno virtual si aún no existe:
+
+```powershell
+py -3.14 -m venv venv
 ```
 
-#### Validaciones
-- No se permite crear órdenes vacías (sin productos).
-- Solo usuarios autenticados pueden crear órdenes.
-- El timestamp se registra automáticamente.
-- El pedido puede modificarse antes de confirmar.
+3. Activa el entorno virtual:
 
-#### Pruebas manuales
-- Crear 3 órdenes diferentes y verificar que aparecen en la BD y en el frontend.
-
-### ¿Cómo crear una orden paso a paso?
-1. Ingresa a la vista POS y haz clic en "Nueva Orden".
-2. Selecciona la mesa o ingresa el identificador online del cliente.
-3. Haz clic en "Crear Orden".
-4. El sistema crea la orden y te redirige al detalle para agregar productos.
-5. Agrega productos y cantidades a la orden antes de confirmarla.
-6. Solo puedes confirmar la orden si tiene al menos un producto.
-
-### Validaciones y mensajes
-- Solo usuarios autenticados pueden crear órdenes.
-- No se permite confirmar órdenes vacías (sin productos).
-- El sistema muestra mensajes de éxito y error en cada paso.
-
-### Estructura de datos de la orden
-Ejemplo de una orden en la base de datos:
-```json
-{
-  "id": 1,
-  "mesa_o_online": "Mesa 5",
-  "estado": "pendiente",
-  "creado_por": "mesero1",
-  "fecha_creacion": "2026-04-21T15:30:00Z",
-  "productos": [
-    { "id": 2, "nombre": "Hamburguesa Sencilla", "cantidad": 2 },
-    { "id": 5, "nombre": "Coca Cola 400ml", "cantidad": 1 }
-  ]
-}
+```powershell
+.\venv\Scripts\Activate.ps1
 ```
 
-### Notas técnicas
-- El timestamp se registra automáticamente.
-- El flujo es intuitivo y no requiere capacitación especial.
-- Puedes modificar la orden antes de confirmarla.
-- Prueba manual: crea 3 órdenes diferentes y verifica en la BD.
-# Sistema de Gestión de Pedidos e Inventario
+4. Actualiza pip y herramientas básicas:
 
-Sistema web para restaurantes que permite tomar pedidos, controlar inventario y gestionar el flujo completo desde la mesa hasta el pago.
+```powershell
+python -m pip install --upgrade pip setuptools wheel
+```
 
-## Funcionalidades principales
+5. Instala las dependencias del proyecto:
 
-- Gestión de productos del menú
-- Control de inventario con alertas de stock mínimo
-- Registro y seguimiento de pedidos por mesa
-- Actualización automática del stock al tomar pedidos
-- Procesamiento de pagos (efectivo / tarjeta)
-- Reportes de ventas e inventario
-- Control de acceso por roles (Administrador, Mesero, Cajero, Cocinero)
+```powershell
+python -m pip install -r requirements.txt
+```
 
-## Tecnologías
+## Configuración
 
-- Backend: Django 4.2 (Python)
-- Base de datos: SQLite (desarrollo)
-- Autenticación: Django Auth (sesiones)
+1. Si utilizas SQLite, no necesitas configuración adicional.
+2. Si deseas usar otra base de datos, actualiza `restin/settings.py` con los datos de conexión.
+3. Aplica migraciones:
 
----
+```powershell
+python manage.py migrate
+```
 
-## Gestión de Ingredientes (RF-15)
+4. Crea un superusuario para acceder al panel administrativo:
 
-El módulo de ingredientes está disponible para administradores en `/products/ingredientes/`.
+```powershell
+python manage.py createsuperuser
+```
+
+## Ejecución
+
+Inicia el servidor de desarrollo:
+
+```powershell
+python manage.py runserver
+```
+
+Luego abre en el navegador:
+
+- http://127.0.0.1:8000/ para el sitio principal
+- http://127.0.0.1:8000/admin/ para el panel de administración
+
+## Manual de uso
+
+### Inicio de sesión
+
+- Accede con el usuario creado en el superusuario.
+- Los roles de usuario definen qué opciones están disponibles en el sistema.
+
+### Gestión de productos
+
+- Ingresa a la sección de productos para crear, editar o eliminar productos del menú.
+- Cada producto puede asociarse con ingredientes y cantidades necesarias para su preparación.
+
+### Gestión de ingredientes
+
+- Ve a la sección de ingredientes para controlar el stock disponible.
+- El stock se actualiza automáticamente cuando se confirma una orden.
+- Los ingredientes con stock bajo se destacan en la interfaz.
+
+### Gestión de pedidos
+
+- Crea nuevas órdenes desde el punto de venta (POS).
+- Selecciona la mesa o el identificador del cliente.
+- Agrega productos y cantidades.
+- Confirma la orden para que se registre el consumo de inventario.
+
+### Flujo de cocina
+
+- Las órdenes aparecen en la vista de cocina.
+- El personal de cocina puede cambiar el estado de la orden a "Listo" o "Entregada".
+- Solo los roles autorizados pueden realizar cambios de estado.
+
+### Historial de inventario
+
+- El sistema registra los movimientos de stock en la tabla de movimientos.
+- Cada movimiento incluye fecha, cantidad y stock resultante.
+- Útil para auditoría y seguimiento de consumo.
+
+## Comandos útiles
+
+- Ejecutar migraciones:
+
+```powershell
+python manage.py migrate
+```
+
+- Crear superusuario:
+
+```powershell
+python manage.py createsuperuser
+```
+
+- Revisar el estado del proyecto:
+
+```powershell
+python manage.py check
+```
+
+- Correr pruebas:
+
+```powershell
+python manage.py test
+```
+
+## Directorio importante
+
+- `products/`: lógica de productos, ingredientes y recetas.
+- `ventas/`: gestión de pedidos, estados y consumo de inventario.
+- `users/`: usuarios, roles y permisos.
+- `restin/`: configuración global de Django.
+
+## Notas finales
+
+- El proyecto está diseñado para su uso en un entorno de desarrollo.
+- Para producción, configura variables de entorno y una base de datos adecuada.
+- Verifica los permisos de usuario para el acceso a funciones críticas.
 
 ### Estructura del ingrediente
 
