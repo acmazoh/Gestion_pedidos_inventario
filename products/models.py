@@ -19,6 +19,9 @@ class Ingrediente(models.Model):
     stock = models.PositiveIntegerField(default=0, help_text="Cantidad disponible en inventario")
     unidad_medida = models.CharField(max_length=20, choices=UNIDAD_CHOICES, default='unidad')
 
+    def esta_ligado_a_productos(self):
+        return self.productos.exists() or self.productoingrediente_set.exists()
+
     def __str__(self):
         return self.nombre
 
